@@ -10,9 +10,9 @@ function sendemail($email_tujuan, $pesan = null, $subject = null, $nama_pengirim
 
     $ci = &get_instance();
 
-    require VENDOR_PATH . 'vendor/phpmailer/phpmailer/src/Exception.php';
-    require VENDOR_PATH . 'vendor/phpmailer/phpmailer/src/PHPMailer.php';
-    require VENDOR_PATH . 'vendor/phpmailer/phpmailer/src/SMTP.php';
+    require VENDOR_PATH . 'phpmailer/phpmailer/src/Exception.php';
+    require VENDOR_PATH . 'phpmailer/phpmailer/src/PHPMailer.php';
+    require VENDOR_PATH . 'phpmailer/phpmailer/src/SMTP.php';
 
     $mail = new PHPMailer(TRUE);
 
