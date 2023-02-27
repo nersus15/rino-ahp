@@ -118,7 +118,7 @@ if (!method_exists($this, 'myOS')) {
     }
 }
 if (!method_exists($this, 'config_sidebar')) {
-    function config_sidebar($sidebar, int $activeMenu = 0, $configName = 'menu', $subMenuConf = null)
+    function config_sidebar($sidebar, int $activeMenu = 0, int $activeSubMenu = null, $configName = 'menu')
     {
         /** @var CI_Controller $ci */
         $ci =& get_instance();
@@ -127,27 +127,42 @@ if (!method_exists($this, 'config_sidebar')) {
         $compConf = $ci->config->item('menu');
         $sidebarConf = $compConf[$sidebar];
         if(!is_null($activeMenu))
-            $sidebarConf['menus'][$activeMenu]['active'] = true;
+            $sidebarConf[$activeMenu]['active'] = true;
 
-        if (!empty($subMenuConf)) {
-            $sidebarConf['subMenus'][$subMenuConf['sub']]['menus'][$subMenuConf['menu']]['active'] = true;
+        if (!is_null($activeSubMenu) && isset($sidebarConf[$activeMenu]['sub'])) {
+            $sidebarConf[$activeMenu]['sub'][$activeSubMenu]['active'] = true;
         }
         
         // Tandai sebagai menu sidebar
-        foreach($sidebarConf['menus']  as $k => $m){
-            $sidebarConf['menus'][$k]['parrent_element'] = 'sidebar';
-            $sidebarConf['menus'][$k]['id'] = '-';
+        foreach($sidebarConf as $k => $m){
+            $sidebarConf[$k]['parrent_element'] = 'sidebar';
+            $sidebarConf[$k]['id'] = '-';
 
         }
 
-        if(isset($sidebarConf['subMenus'])){
-            foreach($sidebarConf['subMenus'] as $k => $sb){
-                foreach($sb['menus'] as $k1 => $m){
-                    $sidebarConf['subMenus'][$k]['menus'][$k1]['parrent_element'] = 'sidebar';
+        $menus = [];
+        $subMenus = [];
+
+        foreach($sidebarConf as $v){
+            $menus[] = $v;
+            if(isset($v['sub']) && !empty($v['sub'])){
+                $subMenus[] = ['induk' => str_replace('#', '', $v['link']), 'menus' => $v['sub']];
+            }
+        }
+
+        foreach($menus as $k => $v){
+            if(isset($v['sub']))
+                unset($menus[$k]['sub']);
+        }
+
+        if(!empty($subMenus)){
+            foreach($subMenus as $k => $sb){
+                foreach($sb['menus'] as $k2 => $v2){
+                    $subMenus[$k]['menus'][$k2]['parrent_element'] = 'sidebar';
                 }
             }
         }
-        return $sidebarConf;
+        return ['menus' => $menus, 'subMenus' => $subMenus];
     }
 }
 
