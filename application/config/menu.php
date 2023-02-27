@@ -1,7 +1,7 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
 
-$config['comp']['dore']['sidebar'] = array(
+$config['menu'] = array(
     'def' => array(
         'menus' => array(
             array('text' => 'Dashboard', 'icon' => 'iconsmind-Home', 'link' => base_url('admin')),

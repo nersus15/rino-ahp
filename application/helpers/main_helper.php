@@ -118,14 +118,14 @@ if (!method_exists($this, 'myOS')) {
     }
 }
 if (!method_exists($this, 'config_sidebar')) {
-    function config_sidebar($configName = 'comp', $sidebar, int $activeMenu = null, $subMenuConf = null)
+    function config_sidebar($sidebar, int $activeMenu = 0, $configName = 'menu', $subMenuConf = null)
     {
         /** @var CI_Controller $ci */
         $ci =& get_instance();
 
         $ci->load->config($configName);
-        $compConf = $ci->config->item('comp');
-        $sidebarConf = $compConf['dore']['sidebar'][$sidebar];
+        $compConf = $ci->config->item('menu');
+        $sidebarConf = $compConf[$sidebar];
         if(!is_null($activeMenu))
             $sidebarConf['menus'][$activeMenu]['active'] = true;
 
