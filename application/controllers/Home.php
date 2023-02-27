@@ -56,6 +56,6 @@ class Home extends CI_Controller{
     }
     
     function phpinfo(){
-        phpinfo(int $flags = INFO_ALL);
+        phpinfo(INFO_ALL);
     }
 }
