@@ -54,4 +54,8 @@ class Home extends CI_Controller{
         $this->addViews('template/dore', $data);
         $this->render();
     }
+    
+    function phpinfo(){
+        phpinfo(int $flags = INFO_ALL);
+    }
 }
