@@ -74,7 +74,7 @@ defined('FOPEN_READ_WRITE_CREATE_STRICT')       OR define('FOPEN_READ_WRITE_CREA
 |
 */
 
-define('USER_ROLES', ['bendahara 1', 'bendahara 2', 'ketua yayasan', 'kepala sekolah']);
+define('USER_ROLES', ['admin', 'member']);
 
 defined('EXIT_SUCCESS')        OR define('EXIT_SUCCESS', 0); // no errors
 defined('EXIT_ERROR')          OR define('EXIT_ERROR', 1); // generic error
@@ -84,16 +84,19 @@ defined('EXIT_UNKNOWN_CLASS')  OR define('EXIT_UNKNOWN_CLASS', 5); // unknown cl
 defined('EXIT_UNKNOWN_METHOD') OR define('EXIT_UNKNOWN_METHOD', 6); // unknown class member
 defined('EXIT_USER_INPUT')     OR define('EXIT_USER_INPUT', 7); // invalid user input
 defined('EXIT_DATABASE')       OR define('EXIT_DATABASE', 8); // database error
-defined('EXIT__AUTO_MIN')      OR define('EXIT__AUTO_MIN', 9); // lowest automatically-assigned error code
-defined('EXIT__AUTO_MAX')      OR define('EXIT__AUTO_MAX', 125); // highest automatically-assigned error code
+defined('EXIT_AUTO_MIN')      OR define('EXIT_AUTO_MIN', 9); // lowest automatically-assigned error code
+defined('EXIT_AUTO_MAX')      OR define('EXIT_AUTO_MAX', 125); // highest automatically-assigned error code
 define('PEMASUKAN_DARI_SISWA', array('M01', 'M02', 'M03'));
 define('MYSQL_TIMESTAMP_FORMAT', 'Y-m-d H:i:s');
 define('MYSQL_DATE_FORMAT', 'Y-m-d');
-define('JWT_AUTH', false);
-define('ASSETS_PATH', str_replace('application/', '', APPPATH));
+define('JWT_AUTH', TRUE);
+define('ASSETS_PATH', str_replace('application' . DIRECTORY_SEPARATOR, '', APPPATH) . 'public'.DIRECTORY_SEPARATOR .'assets' . DIRECTORY_SEPARATOR);
+define('DOCS_PATH', str_replace('application' . DIRECTORY_SEPARATOR, '', APPPATH) . 'public'.DIRECTORY_SEPARATOR.'docs' . DIRECTORY_SEPARATOR);
 define ('IS_CORS_ACTIVE', false);
 define('SYNC_DATAUSER', false);
 define('KAS_KECIL', array('K01', 'K02', 'K03', 'K04', 'K05'));
-define('VENDOR_PATH', str_replace('application/', '', APPPATH));
-define('CDN_PATH', 'https://cdn.kamscode.tech/');
-define('ROOT', str_replace('application/config', '', __DIR__));
+define('VENDOR_PATH', str_replace('application' . DIRECTORY_SEPARATOR, '', APPPATH) . 'vendor' .DIRECTORY_SEPARATOR);
+define('CDN_PATH', 'https://cdn.kamscode.site/');
+define('ROOT', str_replace('application/config', '',__DIR__));
+define("CONTROLLER_PATH", APPPATH . "controllers" . DIRECTORY_SEPARATOR);
+define("ARTIKEL_URL", "https://demo.kamscode.site/penerbit");

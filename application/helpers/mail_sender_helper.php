@@ -19,13 +19,13 @@ function sendemail($email_tujuan, $pesan = null, $subject = null, $nama_pengirim
     try {
         /* Set the mail sender. */
         $mail->IsSMTP();
-        $mail->Host = "mail.kamscode.tech";
+        $mail->Host = "";
 
         // optional
         // used only when SMTP requires authentication  
         $mail->SMTPAuth = true;
-        $mail->Username = 'kamscode';
-        $mail->Password = '3bS9Fn2g8n';
+        $mail->Username = '';
+        $mail->Password = '';
         $mail->setFrom($email_pengirim, $nama_pengirim);
 
         /* Add a recipient. */

@@ -1,7 +1,7 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-if(!method_exists($this,'field')){
+if(!method_exists($this,'fieldmapping')){
     function fieldmapping($config, $input, $defaultValue = array(), $petaNilai = array()){
 
         /** @var CI_Controller $ci */
@@ -15,19 +15,27 @@ if(!method_exists($this,'field')){
             response(['message' => 'Config form ' . $config . ' Tidak ditemukan'], 404);
         
         foreach($configitem[$config] as $k => $v){
-            if(isset($input[$k]))
+            if($adaDefault && isset($defaultValue[$k])){
+                if(isset($input[$k]) && (is_null($input[$k]) || $input[$k] == ''))
+                    $field[$v] = $defaultValue[$k];
+                else
+                    $field[$v] = html_escape($input[$k]);
+            }elseif((!$adaDefault || !isset($defaultValue[$k])) && isset($input[$k]))
                 $field[$v] = html_escape($input[$k]);
-            elseif(!isset($input[$k]) && $adaDefault && isset($defaultValue[$k]))
-                $field[$v] = $defaultValue[$k];
         }
-
+        
+        
         if($adaPeta){
-            foreach($petaNilai as $f){
+            foreach($petaNilai as $key => $f){
                 foreach($f as $k => $v){
-                    if($field[$f] == $k)
-                        $field[$f] = $v;
+                    if($field[$key] == $k)
+                        $field[$key] = $v;
                 }
             }
+        }
+        foreach($field as $k => $f){
+            if($f == '#unset') // nanti jika dia defaultnya unset dia dihapus dari arraya agar tidak update kolom itu
+                unset($field[$k]);
         }
         return $field;
     }

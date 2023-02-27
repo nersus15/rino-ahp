@@ -1,107 +1,146 @@
-<?php
-defined('BASEPATH') or exit('No direct script access allowed');
-
-class Uihelper extends CI_Controller
-{
+<?php defined('BASEPATH') or exit('No direct script access allowed');
+class Uihelper extends CI_Controller{
     function form()
     {
+
         if (httpmethod())
             response(['message' => 'Ilegal akses'], 403);
 
         if (!isset($_GET['f']))
             response(['message' => 'File (form) kosong'], 404);
+        $skrip = '';
+        if(isset($_GET['s']) && !empty($_GET['s']))
+            $skrip = $_GET['s'];
+            
         $form = $_GET['f'];
+        $data = array(
+            'ed' => [],
+            'sv' => []
+        );
+        if(isset($_GET['ed']))
+            $data['ed'] = json_decode($_GET['ed']);
+        if(isset($_GET['sv']))
+            $data['sv'] = json_decode($_GET['sv']);
 
         if (!file_exists(APPPATH . 'views/' . $form . '.php'))
-            response(['message' => 'Form yang ' . $form . ' Tidak ditemukan'], 404);
+            response(['message' => 'Form ' . $form . ' Tidak ditemukan'], 404);
         else {
-            $this->addViews($form);
-            $this->render();
+            $html =  $this->load->view($form, $data, true);
+            
+            if(!empty($skrip)){
+                $skrip = load_script($skrip, [
+                    'form_cache' => json_encode($data['ed']),
+                    'form_data' => json_encode($data['sv'])
+                ], true);    
+            }
+            response([
+                'html' => $html . "<script id='" .$data['sv']->skripid. "'>" . $skrip . '</script>'
+            ]);
         }
     }
-
-    function upload($tipe = 'gambar', $jenis = 'thumb')
+    function skrip()
     {
-        if (httpmethod('GET'))
+        if (httpmethod())
             response(['message' => 'Ilegal akses'], 403);
+            
+        $skrip = '';
+        if(isset($_GET['s']) && !empty($_GET['s']))
+            $skrip = $_GET['s'];
+        if(empty($skrip)) response(['skrip' => '']);
 
-        $this->load->helper('file_upload');
-        $file = &$_FILES['file'];
-        $img = uploadImage($file, 'file', $jenis);
-
-        response(['message' => 'Berhasil upload gambar', 'img' => $img, 'key' => $file['name']]);
+        if (!file_exists(ASSETS_PATH . 'js/' . $skrip . '.js'))
+            response(['message' => 'Form ' . $skrip . ' Tidak ditemukan'], 404);
+        else {
+            $data = array(
+                'ed' => [],
+                'sv' => []
+            );
+            if(isset($_GET['ed']))
+                $data['ed'] = json_decode($_GET['ed']);
+            if(isset($_GET['sv']))
+                $data['sv'] = json_decode($_GET['sv']);
+            response([
+                'skrip' => "<script id='". $data['sv']->skripid ."'>" . load_script($skrip,[
+                    'form_cache' => json_encode($data['ed']),
+                    'form_data' => json_encode($data['sv'])
+                ], true) . "</script>"
+            ]);
+        }
     }
 
-    function delete_file($tipe, $nama)
-    {
-        if ($tipe == 'profile')
-            $path = ASSETS_PATH . 'public/assets/img/profile/' . $nama;
-        if ($tipe == 'thumb')
-            $path = ASSETS_PATH . 'public/assets/img/barang/' . $nama;
-
-        try {
-            unlink($path);
-        } catch (\Throwable $th) {
-            response(['message' => 'Terjadi kesalahan', 'err' => print_r($th, true)], 500);
-        }
-
-        response(['message' => 'Berhasil delete file ' . $nama]);
+    function notifcenter(){
+        response("OK");
     }
 
-    function carousel($jenis)
-    {
-        if ($jenis == 'get') {
-            $data = file_get_contents(ROOT . 'public/docs/.carousel-map.json');
-            if (empty($data))
-                response(['data' => null]);
-
-            $data = json_decode($data, true);
-            response(['data' => $data]);
-        } elseif ($jenis == 'set') {
-            $post = &$_POST;
-            $carousel = array();
-
-            if(isset($post['carousel_img'])){
-                for ($i=0; $i < count($post['carousel_img']) ; $i++) { 
-                    $carousel[] = array(
-                        'img' => $post['carousel_img'][$i],
-                        'text' => $post['carousel_text'][$i],
-                        'badge' => $post['carousel_badge'][$i]
-                    );
-                }
-            }
-
-            $data = json_encode($carousel);
-
-            try {
-                file_put_contents(ROOT . 'public/docs/.carousel-map.json', $data);
-            } catch (\Throwable $th) {
-                response(['message' => 'Terjadi kesalahan', 'err' => print_r($th, true)]);
-            }
-
-            response(['message' => 'Berhasil setting carousel']);
+    function export($name, $jenis = 'pdf'){
+        if($name == 'laporan_booking'){
+            $this->load->model('Booking');
+            $data = $this->Booking->get_all();
+            $html = $this->siapkan_tabel_booking($data);
+        }elseif($name == 'laporan_member'){
+            $this->load->model('Member');
+            $data = $this->Member->get_all();
+            $html = $this->siapkan_tabel_member($data);
         }
-        elseif($jenis == 'delete'){
-            file_put_contents(ROOT . 'public/docs/.carousel-map.json', '');
-
-            response(['message' => 'Berhasil hapus carousel']);
-        }        
+        buat_pdf($html, kapitalize(str_replace('_', ' ', $name)) . '.' . $jenis);
+        exit();
     }
 
-    function get_files($return = false)
-    {
-        $path = $_GET['p'];
-        if(empty($path))
-            response(['message' => 'Tidak ada path yang dikirim']);
-        try {
-            $files = scandir(ROOT . $path);
-        } catch (\Throwable $th) {
-            response(['message' => 'Terjadi kesalahan', 'err' => print_r($ht, true)]);
-        }
-        unset($files[0], $files[1]);
-        response(['data' => $files]);
-
-        if($return)
-            return $files;
+    private function siapkan_tabel_booking($data){
+        $html = $this->getContentView('report/tabel', array(
+            'dtTitle' => 'Laporan Booking',
+            'header' => array( 'Lapangan', 'Jadwal', 'Nama Tim','Perwakilan', 'Tanggal Booking', 'Member', 'Tarif', 'Diskon', 'Tagihan', 'Status'),
+            'data' => $data->data, 
+            'config' => array(
+                function($data){
+                    return $data['lapangan'] . " (" . $data['jenis'] . ") - " . $data['tempat'];
+                },
+                function($data){
+                    return  $data['tanggal'] . " Jam " . $data['mulai'] . " - " . $data['selesai'];
+                },
+                function($data){
+                    return $data['mtim'] ?? $data['tim'];
+                },
+                function($data){
+                    return $data['mwakil'] ?? $data['wakil'];
+                },
+                'dibuat',
+                function ($data){
+                    return  $data['mid'] ?? "Bukan Member";
+                },
+                function($data){
+                    return rupiah_format($data['tarif']);
+                },
+                function($data){
+                    $data['diskon'] = $data['diskon'] ?? 0;
+                    $diskon = ($data['tarif'] * $data['diskon'])/100;
+                    return !empty($data['mid']) ? $data['diskon'] . '% - ' . rupiah_format($diskon) : '-';
+                },
+                function ($data){
+                    $data['diskon'] = $data['diskon'] ?? 0;
+                    $diskon = ($data['tarif'] * $data['diskon'])/100;
+                    return !empty($data['mid']) ? rupiah_format($data['tarif'] - $diskon) : rupiah_format($data['tarif']);
+                },
+                'status',
+            )
+        ), true);
+        return $html;
+    }
+    private function siapkan_tabel_member($data){
+        $html = $this->getContentView('report/tabel', array(
+            'dtTitle' => 'Laporan Booking',
+            'header' => array( 'Nama Tim','Perwakilan', 'No. HP', 'Email', 'Alamat', 'Tanggal Daftar', 'Username'),
+            'data' => $data->data, 
+            'config' => array(
+                'tim',
+                'penanggung_jawab',
+                'hp',
+                'email',
+                'asal',
+                'dibuat',
+                'username'
+            )
+        ), true);
+        return $html;
     }
 }

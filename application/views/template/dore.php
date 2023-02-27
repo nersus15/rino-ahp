@@ -3,10 +3,15 @@
 $data_head = array(
     'resource' => $resource,
     'extra_js' => isset($extra_js) ? $extra_js : null,
-    'sembunyikanSidebar' => isset($sembunyikanSidebar) ? $sembunyikanSidebar : null,
-    'extra_css' => isset($extra_css) ? $extra_css : null
+    'extra_css' => isset($extra_css) ? $extra_css : null,
+    'includeTiny' => isset($includeTiny) ? $includeTiny : null,
+    'loadingAnim' => isset($loading_animation) ? $loading_animation : null,
+    'bodyClass' => isset($bodyClass) ? $bodyClass : 'show-spinner',
+    'hideSpinner' => isset($hideSpinner) ? $hideSpinner : false,
 );
-include_view('head/main', $data_head);
+$header = isset($header) ? $header : 'head/main';
+$footer = isset($footer) ? $footer : 'footer/main';
+include_view($header, $data_head);
 if (isset($navbar) && !is_array($navbar))
     include_view($navbar, $navbarConf);
 if (isset($sidebar) && !is_array($sidebar))
@@ -30,17 +35,23 @@ if (!isset($data_content))
 
         </div>
         <?php
-        if (isset($content) && !empty($content)) {
-            if (is_array($content)) {
-                foreach ($content as $c) {
-                    include_view($c, $data_content);
-        ?>
-                    <br>
-        <?php }
-            } else
-                include_view($content, $data_content);
+        if (isset($contentHtml) && !empty($contentHtml)) {
+            if(!is_array($contentHtml)) $contentHtml = [$contentHtml];
+            foreach ($contentHtml as $k => $c) {
+                echo $c;
+            }
         }
         ?>
+        <br>
+
+        <?php if (isset($content) && !empty($content)) {
+            if (!is_array($content)) $content = [$content];
+            foreach ($content as $k => $c) {
+                    include_view($c, $data_content);
+            }
+        }
+        ?>
+        <br>
     </div>
 </main>
 <?php
@@ -50,4 +61,4 @@ $dataFoot = array(
     'extra_js' => isset($extra_js) ? $extra_js : null, 
     'extra_css' => isset($extra_css) ? $extra_css : null
 );
-include_view('foot/main', $dataFoot);
+include_view($footer, array('resource' => $resource, 'extra_js' => isset($extra_js) ? $extra_js : null, 'extra_css' => isset($extra_css) ? $extra_css : null));

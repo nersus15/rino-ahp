@@ -69,7 +69,7 @@
                     <i class="text-primary simple-icon-bell"></i>
                     <span class="count"></span>
                 </button>
-                <div class="dropdown-menu dropdown-menu-right mt-3 scroll position-absolute" id="notificationDropdown">
+                <div class="dropdown-menu dropdown-menu-right mt-3 scroll position-absolute" id="notificationDropdown" style="overflow-y: scroll">
                 </div>
             </div>
             <?php endif ?>
@@ -86,7 +86,7 @@
                     <button class="btn btn-empty p-0" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <span class="name text-primary"><?php echo !empty(sessiondata('login', 'nama_lengkap')) ? sessiondata('login', 'nama_lengkap') : sessiondata('login', 'username') ?></span>
                         <span>
-                            <img class="border border-primary" alt="Profile Picture" src="<?php echo base_url('public/assets/img/profile/' . sessiondata('login', 'photo')) ?>" />
+                            <img class="border border-primary" alt="Profile Picture" src="<?php echo sessiondata('login', 'avatar') ?>" />
                         </span>
                     </button>
 
@@ -105,3 +105,4 @@
        
     </div>
 </nav>
+<script></script>

@@ -1,147 +1,184 @@
 <?php
+
+
 defined('BASEPATH') or exit('No direct script access allowed');
-
-class Admin extends CI_Controller{
-    function __construct() {
-        parent::__construct();
-        if(!is_login('admin'))
-            response(['message' => 'Anda tidak memiliki akses', 'type' => 'error'], 403);
-
-    }
-    function dashboard(){
-        $data = array(
-            'resource' => array('main', 'dore'),
+class Admin extends CI_Controller
+{
+    function index(){
+        $data = [
+            'resource' => array('main', 'dore','datatables', 'form'),
+            'contentHtml' => array(),
             'content' => array(),
-            'adaThemeSelector' => true,
             'navbar' => 'component/navbar/navbar.dore',
-            'sidebar' => 'component/sidebar.dore',
-            'sembunyikanSidebar' => true,
+            'sidebar' => 'component/sidebar/sidebar.dore',
             'pageName' => 'Dashboard',
+            'sidebarConf' => config_sidebar('comp', 'def', 0),
             'navbarConf' => array(
-                'adaSidebar' => true,
                 'adaUserMenu' => true,
-                'adaNotif' => true,
-                'pencarian' => true,
-                'homePath' => base_url('admin/dashboard')
-            ),
-            'sidebarConf' => config_sidebar('comp', 'admin')
-
-        );
-        $this->addViews('template/dore',$data);
-        $this->render();
-    }
-
-    function barang(){
-        $data = array(
-            'resource' => array('main', 'dore', 'datatables'),
-            'content' => array('pages/admin.barang'),
-            'adaThemeSelector' => true,
-            'navbar' => 'component/navbar/navbar.dore',
-            'sidebar' => 'component/sidebar.dore',
-            'pageName' => 'Data',
-            'sembunyikanSidebar' => true,
-            'subPageName' => 'Barang',
-            'navbarConf' => array(
+                'adaNotif' => false,
+                'pencarian' => false,
                 'adaSidebar' => true,
-                'adaUserMenu' => true,
-                'adaNotif' => true,
-                'pencarian' => true,
-                'homePath' => base_url('admin/dashboard')
+                'homePath' => base_url()
             ),
-            'sidebarConf' => config_sidebar('comp', 'admin', 1, array('sub' => 0, 'menu' => 0))
-        );
-
-        $this->add_cachedJavascript('js/pages/admin.barang.js');
-
-        $this->add_javascript(array(
-            ['src' => 'vendor/select2/dist/js/select2.js', 'type' => 'file', 'pos' => 'head'],
-            ['src' => 'vendor/dropzone/js/dropzone.min.js', 'type' => 'file', 'pos' => 'head']
-        ));
-
-        $this->add_stylesheet(array(
-            ['src' => 'vendor/select2/dist/css/select2.css', 'pos' => 'head', 'type' => 'file'],
-            ['src' => 'vendor/dropzone/css/dropzone.min.css', 'pos' => 'head', 'type' => 'file'],
-        ));
+            'bodyClass' => 'menu-hidden sub-hidden'
+        ];
         $this->addViews('template/dore', $data);
         $this->render();
     }
+    function buku($id = null){
+        if(!is_login())
+            redirect(base_url());
 
-    function penjual(){
+        if(empty($id)) $this->terbitan();
+        else $this->detail($id);
+    }
+    function login(){
+        if(is_login())
+            redirect(base_url('admin/buku'));
+        $ran = random(50);
+        $this->session->set_userdata('ran', $ran);
         $data = array(
-            'resource' => array('main', 'dore', 'datatables'),
-            'content' => array('pages/admin.penjual'),
-            'adaThemeSelector' => true,
-            'navbar' => 'component/navbar/navbar.dore',
-            'sidebar' => 'component/sidebar.dore',
-            'pageName' => 'Data',
-            'sembunyikanSidebar' => true,
-            'subPageName' => 'Barang',
-            'navbarConf' => array(
-                'adaSidebar' => true,
-                'adaUserMenu' => true,
-                'adaNotif' => true,
-                'pencarian' => true,
-                'homePath' => base_url('admin/dashboard')
-            ),
-            'sidebarConf' => config_sidebar('comp', 'admin', 1, array('sub' => 0, 'menu' => 1))
+            'resource' => array('main', 'form', 'login'),
+            'content' => array('forms/login2'),
+            'hideSpinner' => true,
+            'loading_animation' => true,
         );
-
-        $this->add_cachedJavascript('js/pages/admin.penjual.js');
-
-        $this->add_javascript(array(
-            ['src' => 'vendor/select2/dist/js/select2.js', 'type' => 'file', 'pos' => 'head'],
-            ['src' => 'vendor/dropzone/js/dropzone.min.js', 'type' => 'file', 'pos' => 'head']
+        $this->add_cachedJavascript('pages/auth', 'file', 'body:end', array(
+            'formid' => '#form-login',
+            'ran' => $ran
         ));
-
-        $this->add_stylesheet(array(
-            ['src' => 'vendor/select2/dist/css/select2.css', 'pos' => 'head', 'type' => 'file'],
-            ['src' => 'vendor/dropzone/css/dropzone.min.css', 'pos' => 'head', 'type' => 'file'],
-        ));
-        $this->addViews('template/dore', $data);
+        $this->removeFromResourceGroup('main', 'vendor/fontawesome/css/all.min.css');
+        $this->addViews('template/blank', $data);
         $this->render();
     }
 
-    function settings($type){
+    private function terbitan(){
+        if(!is_login())
+            redirect(base_url());
 
-        $data = array(
-            'resource' => array('main', 'dore'),
-            'adaThemeSelector' => true,
-            'navbar' => 'component/navbar/navbar.dore',
-            'sidebar' => 'component/sidebar.dore',
-            'pageName' => 'Settings',
-            'sembunyikanSidebar' => true,
-            'navbarConf' => array(
-                'adaSidebar' => true,
-                'adaUserMenu' => true,
-                'adaNotif' => true,
-                'pencarian' => true,
-                'homePath' => base_url('admin/dashboard')
+       
+        $tabelBuku = $this->getContentView('component/datatables/datatables.responsive', array(
+            'dtTitle' => '',
+            'dtid' => 'dt-buku-terbitan',
+            'head' => array(
+            '', 'Cover', 'Judul','Penulis', 'ISBN', 'Deskripsi', 'Dimensi', 'Halaman', 'Harga'
             ),
-            'sidebarConf' => config_sidebar('comp', 'admin', 1, array('sub' => 0, 'menu' => 1))
-        );
-        switch($type){
-            case 'carousel':
-                
-                $data['subPageName'] = 'Carousel';
-                $data['content'] = array('pages/admin.settings.carousel');
-                $data['data_content'] = array(
-                    'type' => 'carousel',
-                );
-            break;
-            
-        }
-        $this->add_cachedJavascript('js/pages/admin.settings.js');
-        $this->add_javascript(
-            array(
-                array('src' => CDN_PATH . 'owl/js/owl-carousel.js', 'type' => 'cdn', 'pos' => 'head')
+            'skrip' => 'dtconfig/dt_buku', //wajib
+            'skrip_data' => array('id' => 'dt-buku-terbitan'),
+            'options' => array(
+                'source' => 'ws/buku',
+                'search' => 'false',
+                'select' => 'multi', //false, true, multi
+                'checkbox' => 'true',
+                'change' => 'false',
+                'dom' => 'rtip',
+                'responsive' => 'true',
+                'auto-refresh' => 'false',
+                'deselect-on-refresh' => 'true',
+            ),
+            'form' => array(
+                'id' => 'form-admin',
+                'path' => '',
+                'nama' => 'Form Admin',
+                'skrip' => 'forms/form_admin',
+                'formGenerate' => array(
+                    [
+                        'type' => 'hidden', 'name' => '_http_method', 'id' => 'method',
+                    ],
+                    [
+                        'type' => 'hidden', 'name' => 'old_cover', 'id' => 'old-cover',
+                    ],
+                    [
+                        'type' => 'hidden', 'name' => 'id', 'id' => 'id'
+                    ],
+                    [
+                        "label" => 'Judul', "placeholder" => 'Judul Buku',
+                        "type" => 'text', "name" => 'judul', "id" => 'judul', 'attr' => 'data-rule-required="true"'
+                    ],
+                    [
+                        "label" => 'Penulis', "placeholder" => 'Nama Penulis',
+                        "type" => 'text', "name" => 'penulis', "id" => 'penulis', 'attr' => 'data-rule-required="true"'
+                    ],
+                    [
+                        "label" => 'ISBN (Jika ada)', "placeholder" => 'ISBN',
+                        "type" => 'text', "name" => 'isbn', "id" => 'isbn',
+                    ],
+                    [
+                        "label" => 'Panjang (cm)', "placeholder" => 'Panjang Buku (dalam cm)',
+                        "type" => 'text', "name" => 'panjang', "id" => 'panjang', 'attr' =>  'data-rule-number="true"'
+                    ],
+                    [
+                        "label" => 'Lebar (cm)', "placeholder" => 'Lebar Buku (dalam cm)',
+                        "type" => 'text', "name" => 'lebar', "id" => 'lebar', 'attr' =>  'data-rule-number="true"'
+                    ],
+                    [
+                        "label" => 'Halaman', "placeholder" => 'Jumlah Halaman',
+                        "type" => 'text', "name" => 'halaman', "id" => 'halaman', 'attr' =>  'data-rule-number="true"'
+                    ],
+                    [
+                        "label" => 'Harga', "placeholder" => 'Harga Buku',
+                        "type" => 'text', "name" => 'harga', "id" => 'harga', 'attr' =>  'data-rule-number="true"'
+                    ],
+                    [
+                        "label" => 'Sinopsis/ Deskripsi', "placeholder" => 'Sinopsis/ Deskripsi Buku',
+                        "type" => 'textarea', "name" => 'desc', "id" => 'desc',
+                    ],
+                    [
+                        "label" => 'Cover (gambar)', "placeholder" => 'Gambar Cover Buku',
+                        "type" => 'file', "name" => 'cover', "id" => 'cover', 'class' => 'dropzone'
+                    ],
+                    
+                    
+                ),
+                    'posturl' => 'ws/buku',
+                    'buttons' => array(
+                        [ "type" => 'reset', "data" => 'data-dismiss="modal"', "text" => 'Batal', "id" => "batal", "class" => "btn btn btn-warning" ],
+                        [ "type" => 'submit', "text" => 'Simpan', "id" => "simpan", "class" => "btn btn btn-primary" ]
+                )
+            ),
+            'data_panel' => array(
+                'nama' => 'dt-buku-terbitan',
+                'perpage' => 10,
+                'pages' => array(1, 2, 10),
+                'hilangkan_display_length' => true,
+                'toolbar' => array(
+                    array(
+                        'tipe' => 'buttonset',
+                        'tombol' => array(
+                            array('tipe' => 'link', 'href' => '#', 'title' => 'Tambah', 'icon' => 'icon-plus simple-icon-paper-plane', 'class' => 'btn-outline-primary tool-add tetap'),
+                            array('tipe' => 'link', 'href' => '#', 'title' => 'Update', 'icon' => 'icon-plus simple-icon-pencil', 'class' => 'btn-outline-warning tool-edit tetap'),
+                            array('tipe' => 'link', 'href' => '#', 'title' => 'Hapus', 'icon' => 'icon-delete simple-icon-trash', 'class' => 'btn-outline-danger tool-delete tetap'),
+                        )
+                    ),
+                ),
             )
-        );
-        $this->add_stylesheet(
-            array(
-                ['src' => CDN_PATH . 'owl/css/owl-carousel.min.css', 'type' => 'cdn', 'pos' => 'head']
-            )
-        );
+        ), true);
+
+        $data = [
+            'resource' => array('main', 'dore','datatables', 'form'),
+            'content' => array(),
+            'contentHtml' => array($tabelBuku),
+            'navbar' => 'component/navbar/navbar.dore',
+            'sidebar' => 'component/sidebar/sidebar.dore',
+            'pageName' => 'Data',
+            'subPageName' => 'Buku Terbitan',
+            'sidebarConf' => config_sidebar('comp', 'def', 1),
+            'navbarConf' => array(
+                'adaUserMenu' => true,
+                'adaNotif' => false,
+                'pencarian' => false,
+                'adaSidebar' => true,
+                'homePath' => base_url()
+            ),
+            'bodyClass' => 'menu-hidden sub-hidden'
+        ];
+        $this->add_javascript('vendor/dropzone/js/dropzone.min');
+        $this->add_stylesheet('vendor/dropzone/css/dropzone.min');
+
         $this->addViews('template/dore', $data);
         $this->render();
+    }
+    private function detail($id){
+
     }
 }

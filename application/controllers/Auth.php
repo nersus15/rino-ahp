@@ -3,36 +3,27 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 class Auth extends CI_Controller
 {
-    function index()
+    function login()
     {
+        if(is_login())
+            redirect(base_url("dashboard"));
         $data = array(
-            'resource' => array('main', 'dore')
+            'resource' => array('main', 'form', 'login'),
+            'content' => array('forms/login2'),
+            'hideSpinner' => true,
+            'loading_animation' => true,
         );
-
-
-        $this->add_cachedJavascript('js/pages/login.js');
-
-        $this->addViews(array('head/main', 'pages/login', 'foot/main'), $data);
+        $this->add_cachedJavascript('pages/auth', 'file', 'body:end', array(
+            'formid' => '#form-login',
+        ));
+        $this->removeFromResourceGroup('main', 'vendor/fontawesome/css/all.min.css');
+        $this->addViews('template/blank', $data);
         $this->render();
     }
 
-    function login()
-    {
-        if (!httpmethod())
-            response(['message' => 'ERROR, Tidak ada method Login [GET]', 'type' => 'error'], 405);
-
-        if (is_login())
-            response(['message' => 'Anda sudah login', 'type' => 'error'], 401);
-
-        $this->load->library('Authentication');
-        $post =& $_POST;
-        list($input) = $this->authentication->persiapan($post);
-        $this->authentication->login($input);
-    }
-
     function logout(){
-        if (!httpmethod())
-            response(["message" => "Error, Tidak ada method logout[GET]", "type" => 'error'], 405);
+        // if (!httpmethod())
+        //     response(["message" => "Error, Tidak ada method logout[GET]", "type" => 'error'], 405);
 
         if (!is_login())
             response(['message' => 'Anda belum login', 'type' => 'error'], 401);

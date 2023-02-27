@@ -75,10 +75,10 @@ $query_builder = TRUE;
 
 $db['default'] = array(
 	'dsn'	=> '',
-	'hostname' => 'kamscode.tech',
-	'username' => 'kamscode',
-	'password' => '3bS9Fn2g8n',
-	'database' => 'kamscode_eco',
+	'hostname' => 'localhost',
+	'username' => 'kamsc_penerbit',
+	'password' => 'penerbit',
+	'database' => 'kamscode_penerbit',
 	'dbdriver' => 'mysqli',
 	'dbprefix' => '',
 	'pconnect' => FALSE,

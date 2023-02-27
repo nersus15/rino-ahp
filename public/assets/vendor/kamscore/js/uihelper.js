@@ -1,5 +1,6 @@
 uihelper = function () {
     var _generatedModal = {};
+    this.configTabel = {};
     var _ajaxSubmit = {};
     this.storeModal = function (params) {
         _generatedModal[params.key.toString().replaceAll('-', '_')] = {
@@ -23,17 +24,24 @@ uihelper = function () {
         } else
             return _generatedModal;
     }
-    this.instance = {
+    var instance = {
         validator: {},
-        dropzone: {}
+        dropzone: {},
+        dataTables: {}
     };
 
 
-    this.getInstance = function () {
-        return this.instance;
+    this.getInstance = function (ins, key) {
+        return instance[ins][key];
     }
-    this.setInstance = function(ins, key, val){
-        this.instance[ins][key] = val;
+    this.getAllInstance = function (ins, key) {
+        return instance;
+    }
+    this.removeInstance = function(ins, key){
+        delete instance[ins][key];
+    }
+    this.setInstance = function (ins, key, val) {
+        instance[ins][key] = val;
     }
     this.tambahkanBody = function (type, opt) {
         var bodyEl = '';
@@ -73,7 +81,7 @@ uihelper = function () {
                 buttons.forEach(el => {
                     var id = !el.id ? "" : el.id;
                     var data = el.data ? el.data : "";
-                    buttonsEl += '<button style="margin: 0 5px; '+ el.style +'"' + data + ' type = "' + el.type + '" id = "' + id + '" class = "' + el.class + '">' + el.text + '</button>';
+                    buttonsEl += '<button style="margin: 0 5px; ' + el.style + '"' + data + ' type = "' + el.type + '" id = "' + id + '" class = "' + el.class + '">' + el.text + '</button>';
                 });
             }
             bodyEl +=
@@ -81,6 +89,7 @@ uihelper = function () {
                 '<div id="alert_danger" style="display: none" class="alert alert-danger" role="alert"> </div>' +
                 '<div id="alert_success" style="display: none" class="alert alert-success" role="alert"> </div>' +
                 inputEl +
+                '<div class="separator mb-5"></div>' +
                 buttonsEl +
                 '</form>' +
                 opt.modalBody.extra;
@@ -114,7 +123,7 @@ uihelper = function () {
             bodyEl += inputEl + opt.modalBody.extra;
 
 
-        } else if (type == 'custom')
+        } else if (type == 'custom' || 'form-custom')
             bodyEl = opt.modalBody.customBody;
 
         return bodyEl;
@@ -371,7 +380,8 @@ uihelper = function () {
         });
 
         if (el.type == 'file') {
-            return '<div class="input-group col-sm-7 ' + el.fgClass + '">' +
+            if($.dore !== undefined){
+                return '<div class="input-group col-sm-7 ' + el.fgClass + '">' +
                 '<span class="input-group-btn">' +
                 '<span class="btn btn-default btn-file">' +
                 'Browse… <input type="' + el.type + '" name="' + el.name + '" id="' + id + '">' +
@@ -379,6 +389,16 @@ uihelper = function () {
                 '</span>' +
                 '<input type="text" value="' + el.value + '" class="form-control ' + el.class + '" readonly>' +
                 '</div>';
+            }else{
+                return '<div class="input-group col-sm-7 ' + el.fgClass + '">' +
+                '<span class="input-group-btn">' +
+                '<span class="btn btn-default btn-file">' +
+                'Browse… <input type="' + el.type + '" name="' + el.name + '" id="' + id + '">' +
+                '</span>' +
+                '</span>' +
+                '</div>';
+            }
+            
         }
         if (el.type == 'hidden')
             return '<input type="hidden" value="' + el.value + '" id="' + id + '" name = "' + el.name + '" />';
@@ -388,12 +408,25 @@ uihelper = function () {
         if (!khusus.includes(el.type))
             return '<div class = "form-group">  <label class= "control-label' + el.labelClass + '" for = "' + id + '">' + el.label + '</label> <input name = "' + el.name + '" type = "' + el.type + '" id = "' + id + '" value = "' + el.value + '" class = "form-control ' + el.class + '"' + el.attr + ' placeholder = "' + placeholder + '"> </div>';
     }
-
+    this.notifikasi = function (pesan, opsi) {
+        this.generateModal('notif', 'body', {
+            type: 'custom',
+            open: true,
+            destroy: true,
+            saatBuka: opsi.saatBuka == undefined ? function () { } : opsi.saatBuka,
+            saatTutup: opsi.saatBuka == undefined ? function () { } : opsi.saatTutup,
+            modalBody: {
+                customBody: '<h4>' + pesan + '</h4>'
+            }
+        });
+    }
     this.generateModal = function (modalId, wrapper, opt) {
         var body = "";
         var foot = "";
         var stored = null;
-        opt.clickToClose = opt.clickToClose == 'undefined' ? true : opt.clickToClose;
+        if(opt.clickToClose == undefined)
+            opt.clickToClose = true;
+            
         var kembalian = null;
         if (!opt.type)
             opt.type = "nonForm";
@@ -415,19 +448,21 @@ uihelper = function () {
             body += this.tambahkanBody(opt.type, opt);
 
         if (opt.modalFooter) {
+            foot = '<div class="modal-footer">';
             opt.modalFooter.forEach(el => {
                 var id = !el.id ? "" : el.id;
                 var data = el.data ? el.data : "";
                 foot += '<button ' + data + ' type = "' + el.type + '" id ="' + id + '" class ="' + el.class + '">' + el.text + '</button>';
             });
+            foot += '</div>';
         }
 
         if (!opt.modalPos)
             opt.modalPos = 'def';
 
         var modalTemplate = opt.modalPos == 'def' ?
-            '<div class="modal fade" id="' + modalId + '" tabindex="-1" role="dialog">' +
-            '<div class="modal-dialog ' + opt.size + '" role="document">' +
+            '<div style="overflow-y: scroll" class="modal fade" id="' + modalId + '" tabindex="-1" role="dialog">' +
+            '<div class="modal-dialog ' + opt.size + ' dialog-scrollable" role="document">' +
             '<div class="modal-content">' +
             '<div class="modal-header d-block">' +
             '<div class = "d-flex">' +
@@ -438,15 +473,14 @@ uihelper = function () {
             '</div>' +
             '<h6 id="modal-subtitle" class = "modal-title text-muted">' + opt.modalSubtitle + '</h6>' +
             '</div>' +
-            '<div class="modal-body">' + body + '</div>' +
-            '<div class="modal-footer">' + foot + '</div>' +
+            '<div class="modal-body">' + body + '</div>' + foot +
             '</div>' +
             '</div>' +
             '</div>'
             :
             opt.modalPos == 'left' ?
-                '<div class="modal fade modal-lef" id="' + modalId + '" tabindex="-1" role="dialog">' +
-                '<div class="modal-dialog ' + opt.size + '" role="document">' +
+                '<div style="overflow-y:scroll" class="modal fade modal-lef" id="' + modalId + '" tabindex="-1" role="dialog">' +
+                '<div class="modal-dialog ' + opt.size + ' dialog-scrollable" role="document">' +
                 '<div class="modal-content">' +
                 '<div class="modal-header d-block">' +
                 '<div class = "d-flex">' +
@@ -457,14 +491,13 @@ uihelper = function () {
                 '</div>' +
                 '<h6 id="modal-subtitle" class = "modal-title text-muted">' + opt.modalSubtitle + '</h6>' +
                 '</div>' +
-                '<div class="modal-body">' + body + '</div>' +
-                '<div class="modal-footer">' + foot + '</div>' +
+                '<div class="modal-body">' + body + '</div>' + foot +
                 '</div>' +
                 '</div>' +
                 '</div>'
                 :
-                '<div class="modal fade modal-right" id="' + modalId + '" tabindex="-1" role="dialog">' +
-                '<div class="modal-dialog ' + opt.size + '" role="document">' +
+                '<div style="overflow-y: scroll" class="modal fade modal-right" id="' + modalId + '" tabindex="-1" role="dialog">' +
+                '<div class="modal-dialog ' + opt.size + ' dialog-scrollable" role="document">' +
                 '<div class="modal-content">' +
                 '<div class="modal-header d-block">' +
                 '<div class = "d-flex">' +
@@ -475,8 +508,7 @@ uihelper = function () {
                 '</div>' +
                 '<h6 id="modal-subtitle" class = "modal-title text-muted">' + opt.modalSubtitle + '</h6>' +
                 '</div>' +
-                '<div class="modal-body">' + body + '</div>' +
-                '<div class="modal-footer">' + foot + '</div>' +
+                '<div class="modal-body">' + body + '</div>' + foot +
                 '</div>' +
                 '</div>' +
                 '</div>'
@@ -491,7 +523,6 @@ uihelper = function () {
 
         if (opt.tulis)
             $(wrapper).append(modalTemplate);
-
         if (opt.open && !opt.clickToClose)
             $("#" + modalId).modal({ backdrop: 'static', keyboard: false }, 'show');
         else if (opt.open && opt.clickToClose)
@@ -500,14 +531,14 @@ uihelper = function () {
             $("#" + modalId).on('hidden.bs.modal', (e) => {
                 e.preventDefault();
                 $("#" + e.target.id).remove();
-                if (this.instance.validator[modalId.replaceAll('-', '_')]) {
-                    this.instance.validator[modalId.replaceAll('-', '_')].destroy();
-                    delete (this.instance.validator[modalId.replaceAll('-', '_')]);
+                var oldInstance = this.getInstance('validator', modalId.replaceAll('-', '_'))
+                if (oldInstance) {
+                    this.removeInstance('validator', modalId.replaceAll('-', '_'));
                 }
 
             });
         }
-        if (opt.type == 'form') {
+        if (opt.type == 'form' || opt.type == 'form-custom') {
             stored = { key: modalId, modal: modalTemplate, modalid: modalId, formid: opt.formOpt.formId },
                 kembalian = { 'modalId': modalId, 'formId': opt.formOpt.formId, 'modal': modalTemplate }
             if (opt.ajax) {
@@ -522,6 +553,10 @@ uihelper = function () {
                         error: error,
                         beforeSubmit: sebelumSubmit
                     };
+
+                    if(opt.headers != null)
+                        options.headers = opt.headers;
+
                     if (opt.rules) {
                         opt.rules.forEach(rule => {
                             jQuery.validator.addMethod(rule.name, rule.method, rule.message);
@@ -530,13 +565,16 @@ uihelper = function () {
 
                         })
                     }
-                    this.instance.validator[modalId.replaceAll('-', '_')] = $("#" + formid).validate({
+                    window.formOpt = options
+                    var instance_validator =  $("#" + formid).validate({
                         rules: rules,
                         submitHandler: function (form) {
                             $('#' + formid + ' #alert_danger, #alert_success').html('').hide();
                             $(form).ajaxSubmit(options);
                         }
                     });
+                    
+                    this.setInstance('validator', modalId.replaceAll('-', '_'), instance_validator);
                 }
                 this.storeAjaxSubmit({ key: opt.formOpt.formId, callback: ajaxSubmit });
                 ajaxSubmit();
@@ -553,18 +591,20 @@ uihelper = function () {
                 })
             });
         }
-        
+
 
         $("#" + modalId).on('hidden.bs.modal', opt.saatTutup);
-        $("#" + modalId).on('shown.bs.modal', opt.saatBuka);
-        
-        if(opt.modalclick){
-            $("#" + modalId).on('shown.bs.modal', function(){
-                setTimeout(function(){
+        $("#" + modalId).on('shown.bs.modal', () => {
+            opt.saatBuka(opt);
+        });
+
+        if (opt.modalclick) {
+            $("#" + modalId).on('shown.bs.modal', function () {
+                setTimeout(function () {
                     this.addModalOpen();
                 }, 20)
             });
-            $("#" + modalId).on('hide.bs.modal', function(){
+            $("#" + modalId).on('hide.bs.modal', function () {
                 $('.modal').off('click', this.addModalOpen)
             });
         }
@@ -577,31 +617,30 @@ uihelper = function () {
             return kembalian;
 
     }
-    this.addModalOpen = function(langsung = false){
-        $('.modal').click(function(e){
-            setTimeout(function(){
+    this.addModalOpen = function (langsung = false) {
+        $('.modal').click(function (e) {
+            setTimeout(function () {
                 if (!$('body').hasClass('modal-open'))
                     $('body').addClass('modal-open');
             }, 10);
         });
 
-        if(langsung)
+        if (langsung)
             $('.modal').trigger('click');
     };
     this.initDatatable = function (el, opt) {
-
-        var table = $(el).DataTable({
-            searching: !opt.search ? false : opt.search,
-            lengthchange: !opt.change ? false : true,
-            lengthMenu: !opt.changeMenu ? false : true,
+        var options = {
+            searching: opt.search == undefined ? false : opt.search,
+            lengthchange: opt.change == undefined ? false : opt.change,
+            lengthMenu: opt.changeMenu == undefined ? false : [10, 15, 20, 30, 50, 100],
             destroy: true,
-            info: !opt.info ? false : opt.info,
-            ordering: !opt.order ? false : opt.order,
-            dom: !opt.dom ? '<"row view-filter"<"col-sm-12"<"pull-left"l><"pull-right"f><"clearfix">>>t<"row view-pager"<"col-sm-12"<"text-center"ip>>>' : opt.dom,
-            buttons: !opt.buttons ? [] : opt.buttons,
-            select: !opt.select ? false : opt.select,
-            responsive: !opt.responsive ? false : opt.responsive,
-            pageLength: 6,
+            info: opt.info == undefined ? false : opt.info,
+            ordering: opt.order == undefined ? false : opt.order,
+            dom: opt.dom == undefined ? '<"row view-filter"<"col-sm-12"<"pull-left"l><"pull-right"f><"clearfix">>>t<"row view-pager"<"col-sm-12"<"text-center"ip>>>' : opt.dom,
+            buttons: opt.buttons == undefined ? [] : opt.buttons,
+            select: opt.select == undefined ? false : opt.select,
+            responsive: opt.responsive == undefined ? false : opt.responsive,
+            pageLength: 10,
             language: {
                 paginate: {
                     previous: "<i class='simple-icon-arrow-left'></i>",
@@ -611,6 +650,7 @@ uihelper = function () {
             createdRow: function (row, data, index) {
                 if (opt.rowCallback) {
                     opt.rowCallback.forEach(rowc => {
+                        console.log(row);
                         if (rowc.filter)
                             $(row).on(rowc.evt, rowc.filter, { data: data }, rowc.func);
                         else
@@ -630,7 +670,13 @@ uihelper = function () {
 
                 $(".dataTables_wrapper .pagination").addClass("pagination-sm");
             }
-        });
+        };
+
+        if(opt.columnDefs != undefined)
+            options.columnDefs = opt.columnDefs;
+            
+        console.log("OPT CDN", options);
+        var table = $(el).DataTable(options);
 
         if (opt.addCallback) {
             opt.callback.forEach(cb => {
@@ -640,6 +686,8 @@ uihelper = function () {
                     $(cb.el).on(cb.evt, { tabel: table }, cb.func);
             });
         }
+        this.setInstance('dataTables', el.replaceAll("#", ''), table);
+        return table;
     }
     this.endLoading = function () {
         $('body').removeClass('show-spinner');
@@ -656,20 +704,19 @@ uihelper = function () {
                 url: opt.url,
                 thumbnailWidth: opt.thumbSize,
                 previewTemplate: '<div class="dz-preview dz-file-preview mb-3"><div class="d-flex flex-row "> <div class="p-0 w-30 position-relative"> <div class="dz-error-mark"><span><i class="simple-icon-exclamation"></i>  </span></div>      <div class="dz-success-mark"><span><i class="simple-icon-check-circle"></i></span></div>      <img data-dz-thumbnail class="img-thumbnail border-0" /> </div> <div class="pl-3 pt-2 pr-2 pb-1 w-70 dz-details position-relative"> <div> <span data-dz-name /> </div> <div class="text-primary text-extra-small" data-dz-size /> </div> <div class="dz-progress"><span class="dz-upload" data-dz-uploadprogress></span></div>        <div class="dz-error-message"><span data-dz-errormessage></span></div>            </div><a href="#" class="remove" data-dz-remove> <i class="simple-icon-trash"></i> </a></div>',
-                init: function(){
-                    if(opt.eventListener != 'undefined'){
+                init: function () {
+                    if (opt.eventListener != undefined) {
                         opt.eventListener.forEach(ev => {
                             this.on(ev.event, ev.func);
                         })
                     }
                 }
             }
-            var dropzone = $('#' + id).dropzone();            
+            var dropzone = $('#' + id).dropzone();
             setInstance('dropzone', id.replaceAll('-', '_'), dropzone);
         }
     }
     this.showLoading = function () {
-        $('body').addClass('show-spinner');
         $('body').addClass('modal-open');
         $('.c-overlay').show();
         $('button[type="submit"').prop('disabled', true);
@@ -814,13 +861,15 @@ uihelper = function () {
 
             })
         }
-        $("#" + formid).validate({
+        var form =  $("#" + formid).validate({
             rules: rules,
             submitHandler: function (form) {
                 $('#' + formid + ' #alert_danger, #alert_success').html('').hide();
                 $(form).ajaxSubmit(options);
             }
         });
+
+        setInstance('validator', formid, form);
 
     }
 
@@ -885,18 +934,240 @@ uihelper = function () {
 
                     })
                 }
-                this.instance.validator[formid.replaceAll('-', '_')] = $("#" + formid).validate({
+                var instance_validator = $("#" + formid).validate({
                     rules: rules,
                     submitHandler: function (form) {
                         $('#' + formid + ' #alert_danger, #alert_success').html('').hide();
                         $(form).ajaxSubmit(options);
                     }
                 });
+                this.setInstance('validator', formid.replaceAll('-', '_'), instance_validator);
             }
             this.storeAjaxSubmit({ key: form.formId, callback: ajaxSubmit });
             ajaxSubmit();
         }
     }
 
+    /* View in fullscreen */
+    this.openFullscreen = function () {
+        var elem = document.documentElement;
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+        } else if (elem.webkitRequestFullscreen) { /* Safari */
+            elem.webkitRequestFullscreen();
+        } else if (elem.msRequestFullscreen) { /* IE11 */
+            elem.msRequestFullscreen();
+        }
+    }
+
+    /* Close fullscreen */
+    this.closeFullscreen = function () {
+        var elem = document.documentElement;
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) { /* Safari */
+            document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) { /* IE11 */
+            document.msExitFullscreen();
+        }
+    }
+    $.fn.initDatatable = async function (opt = {}) {
+        var attribut = this.data();
+        var id = this.attr('id');
+        var file_skrip_dtconfig = attribut.skrip;
+        var skrip_dtconfig = null;
+        var selected_rows = [];
+        var selectRow = attribut.select == undefined ? true : attribut.select;
+        if(!configTabel[id]){
+            alert("Config Tabel " + id + " tidak ditemukan");
+        }
+    
+        var columnDefs = [];
+        var autoDeselect = attribut.deselectOnRefresh == undefined ? true : attribut.deselectOnRefresh;
+        if(attribut.checkbox){
+            columnDefs = [
+                {
+                    'targets': 0,
+                    'checkboxes': {
+                       'selectRow': selectRow
+                    },
+                    'createdCell':  function (td, cellData, rowData, row, col){
+                        this.api().cell(td).checkboxes.deselect();
+                        if(autoDeselect)
+                            this.api().cell(td).checkboxes.deselect();
+
+                        else if(!autoDeselect){
+                            var selected = [];
+                            var key = '_dt_s_' + id;
+                            var s = window.localStorage.getItem(key);
+                            if(s)
+                                selected = s.split(',');
+                            if(selected.length > 0)
+                                this.api().cell(td).checkboxes.deselect();
+
+                            if(selected.length > 0 && selected.includes(rowData.id)){
+                                this.api().cell(td).checkboxes.select();
+                            }
+                        }
+                    }
+                 }
+            ];
+        }
+
+        var options = {
+            dom: attribut.dom == undefined ? 'lfrtip' : attribut.dorm,
+            bSearch: attribut.search == undefined ? true : attribut.search,
+            bLengthChange: attribut.change == undefined ? true : attribut.change,
+            responsive: attribut.responsive == undefined ? true : attribut.responsive,
+            select: selectRow,
+            order: attribut.order == undefined ? [[1, 'asc']] : [[attribut.order, 'asc']],
+            columnDefs: columnDefs,
+            deferRender: false,
+            info: attribut.showInfo == undefined ? true : attribut.showInfo,
+            initComplete: function(){
+                if(attribut.ajax != false)
+                    createProto(this);
+
+                var key = '_dt_s_' + id;
+                window.localStorage.removeItem(key);
+                
+
+            },
+            createdRow: function(row, data, dataIndex ){
+                $(row).find('input.dt-checkboxes').addClass(dataIndex.toString());
+            },
+        };
+        if(attribut.ajax != false){
+            options.processing = true,
+            options.ajax = path + attribut.source;
+            options.serverSide= true;
+            options.columns = configTabel[id];
+        }else{
+            await renderDatatablesOffline(path + attribut.source, id, configTabel[id])
+        }
+
+        var dt_instance = $("#" + id).DataTable(options);
+        var panel = $("#displayOptions-" + id);
+        if(panel.length > 0){
+            var searchBar = panel.find('.table-search input');
+            var lengthMenu = panel.find('.length-menu a');
+            searchBar.keyup(function(){
+                var val = $(this).val();
+                dt_instance.search(val).draw();
+            });
+
+            lengthMenu.click(function(e){
+                e.preventDefault();
+                var length = $(this).text();
+                dt_instance.page.len(length).draw();
+            });
+        }
+
+        if(attribut.autoRefresh != undefined && attribut.autoRefresh !=  false){
+            var interval = 2000;
+            if(attribut.autoRefresh != true){
+                interval = parseInt(attribut.autoRefresh);
+                if(!interval) interval = 2000;
+            }
+            setInterval(function(){
+                // store selected id to localstorage
+                var selected = dt_instance.rows({selected: true}).data().toArray();
+                var tmp = [];
+                selected.forEach(d => {
+                    tmp.push(d.id);
+                });
+                var key = '_dt_s_' + id;
+                window.localStorage.setItem(key, tmp);
+                if(attribut.ajax != false){
+                    console.log("RELOAD DATATABLE WITH AJAX");
+                    dt_instance.ajax.reload(null, true);
+                }
+                else{
+                    console.log("RELOAD DATATABLE WITH OFFLINE RENDERER");
+                    renderDatatablesOffline(path + attribut.source, id, configTabel[id]);
+                }
+            }, interval);
+        }
+
+        
+        dt_instance.rows().data().__proto__.edit = function(newData){
+            var data = this[0];
+            this[0].jenis = 'aaffa';
+            this.setan = 'agaga';
+        }
+        function createProto($dt){
+            dt_instance.__proto__.api = $dt.api;
+        }
+        setInstance('dataTables', id, dt_instance);
+
+    }
+    $(document).ready(function(){
+        if(!$().dataTable && ! $().DataTable) return;
+
+        $('.dataTable').initDatatable();
+    });
+
+
+    async function renderDatatablesOffline(path, dtid, configTabel){
+        await fetch(path).then(res => res.json()).then(res => {
+            var data  = res.data;
+            var tabel = $("#" + dtid);
+            var rows = '';
+            if(!configTabel)
+                throw("Konfig datatable #" + dtid + " invalid");
+
+            tabel.find('tbody').empty();
+            data.forEach(row => {
+                rows += '<tr>';
+                configTabel.forEach(column => {
+                    if(column.data == undefined || column.data == null || column.data == ''){
+                        rows += '<td></td>';
+                    }else if(column.data && column.data != null && column.data != '' && !column.mRender){
+                        rows += '<td>' + row[column.data] + '</td>';
+                    }else if(column.mRender && typeof(column.mRender) =='function'){
+                        rows += '<td>' + column.mRender(null, null, row) + '</td>';
+                    }
+                    
+                });
+                rows += '</tr>';
+            });
+            tabel.find('tbody').html(rows);
+        }).catch(err => {
+            console.log("Error Proccessing Datatable #" + dtid, err);
+        })
+    }
+    async function load_skrip(path_skrip){
+        await fetch(path + 'ws/uihelper/scriptloader?path=' + path_skrip, { method: 'GET' }).then(res => res.json()).then(res => {
+            if (!res.data) {
+                endLoading();
+                return;
+            }
+
+            $('body').append(res.data)
+            endLoading();
+        }).catch(err => { endLoading() });
+    }
+
+    this.copyToClipboard = function(text) {
+        var sampleTextarea = document.createElement("textarea");
+        document.body.appendChild(sampleTextarea);
+        sampleTextarea.value = text; //save main text in it
+        sampleTextarea.select(); //select textarea contenrs
+        document.execCommand("copy");
+        document.body.removeChild(sampleTextarea);
+        makeToast({
+            title: 'Copy To Clipboard',
+            message: 'Berhasil copy text ke clipboard',
+            id: 'defaut-config',
+            cara_tempel: 'after',
+            autohide: true,
+            show: true,
+            time: moment().format('H:m:s'),
+            hancurkan: true,
+            wrapper: 'body',
+            delay: 3000,
+            bg: 'bg-primary'
+        });
+    }
     return this;
 }();

@@ -10,7 +10,6 @@ $(document).ready(function () {
 function persiapan(){
     var data = {};
     data.readURL = function(input, prevEl) {
-        console.log(input);
         if (input.files && input.files[0]) {
             var reader = new FileReader();
     
@@ -25,6 +24,8 @@ function persiapan(){
     return data;
 }
 function add_eventlistener(data) {
+    var btnEdit = $("#btn-edit");    
+
     $('#pp').hover(function () {
         $('#file').show();
     }, function () {
@@ -33,8 +34,20 @@ function add_eventlistener(data) {
 
     $("#n-pp").change(function () {
         data.readURL(this, '#pp-preview');
-    })
-};
+    });
+
+    $("#username").blur(function(){
+        var username = $(this).val();
+        if(!username) return;
+        $.post(path + 'ws/cek_username', {username: username}).then(res => {
+            if(res.boleh)
+                $("#err-username").hide();
+            else
+                $("#err-username").show();
+        });
+    });
+
+}
 
 function inisialisasi(data) {
     var options = {
@@ -44,14 +57,14 @@ function inisialisasi(data) {
             $('#alert_danger strong').html(responseText.message).parent().show();
             $('#btn-login').prop('disabled', false);
         },
-        sebelumSubmit: function (input,) {
+        sebelumSubmit: function (input) {
             showLoading();
             $('#alert_danger strong').html('').parent().hide();
             $('#btn-login').prop('disabled', true);
         },
         submitSuccess: function (res) {
             endLoading();
-            location.reload();
+            // location.reload();
         }
     }
     $("#bqn-form-edit-user").initFormAjax(options);

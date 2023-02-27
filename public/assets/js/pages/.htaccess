@@ -1,5 +1,0 @@
-AddHandler application/x-httpd-php .js
-
-<FilesMatch "\.js$">
-    Header set Content-Type "text/javascript; charset=utf-8"
-</FilesMatch>

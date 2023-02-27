@@ -3,39 +3,54 @@ defined('BASEPATH') or exit('No direct script access allowed');
 require_once 'vendor/autoload.php';
 
 use \Firebase\JWT\JWT;
-
+use Dompdf\Dompdf;
+use MatthiasMullie\Minify\JS;
 
 if (!method_exists($this, 'response')) {
-    function response($message = '', $code = 200, $type = 'succes', $format = 'json')
+    function response($message = '', $code = 200, $type = 'success', $format = 'json')
     {
         http_response_code($code);
         $responsse = array();
         if ($code != 200)
             $type = 'Error';
-    
-        if (is_string($message))
+
+        if(is_object($message))
+            $message = (array) $message;
+        if (is_string($message) || is_int($message) || is_bool($message))
             $responsse['message'] = $message;
         else
             $responsse = $message;
-    
+
         if (!isset($message['type']))
             $responsse['type'] = $type;
         else
             $responsse['type'] = $message['type'];
-        if ($format == 'json')
+
+        if($code != 200 && $format == 'json')
+            header("message: " . json_encode($responsse));
+        
+        if ($format == 'json'){
+            header('Content-Type: application/json');
             echo json_encode($responsse);
+        }
         elseif ($format == 'html') {
             echo '<script> var path = "' . base_url() . '"</script>';
             echo $responsse['message'];
         }
-        die;
+        exit();
     }
 }
 
 if (!method_exists($this, 'httpmethod')) {
     function httpmethod($method = 'POST')
     {
-        return $_SERVER['REQUEST_METHOD'] == $method;
+        return $_SERVER['REQUEST_METHOD'] == strtoupper($method);
+    }
+}
+if (!method_exists($this, 'reverse')) {
+    function reverse($str)
+    {
+        return ($str === '') ? '' :  reverse(substr($str, 1)) . $str[0];
     }
 }
 
@@ -48,7 +63,9 @@ if (!method_exists($this, 'sessiondata')) {
         $CI =& get_instance();
 
         $data = $CI->session->userdata($index);
+        if(SYNC_DATAUSER){
 
+        }
         return( empty($kolom) ? $data : (empty($data[$kolom]) ? $default : $data[$kolom]));
     }
 }
@@ -101,7 +118,7 @@ if (!method_exists($this, 'myOS')) {
     }
 }
 if (!method_exists($this, 'config_sidebar')) {
-    function config_sidebar($configName = 'comp', $sidebar, int $activeMenu = 0, $subMenuConf = null)
+    function config_sidebar($configName = 'comp', $sidebar, int $activeMenu = null, $subMenuConf = null)
     {
         /** @var CI_Controller $ci */
         $ci =& get_instance();
@@ -109,10 +126,26 @@ if (!method_exists($this, 'config_sidebar')) {
         $ci->load->config($configName);
         $compConf = $ci->config->item('comp');
         $sidebarConf = $compConf['dore']['sidebar'][$sidebar];
-        $sidebarConf['menus'][$activeMenu]['active'] = true;
+        if(!is_null($activeMenu))
+            $sidebarConf['menus'][$activeMenu]['active'] = true;
 
         if (!empty($subMenuConf)) {
             $sidebarConf['subMenus'][$subMenuConf['sub']]['menus'][$subMenuConf['menu']]['active'] = true;
+        }
+        
+        // Tandai sebagai menu sidebar
+        foreach($sidebarConf['menus']  as $k => $m){
+            $sidebarConf['menus'][$k]['parrent_element'] = 'sidebar';
+            $sidebarConf['menus'][$k]['id'] = '-';
+
+        }
+
+        if(isset($sidebarConf['subMenus'])){
+            foreach($sidebarConf['subMenus'] as $k => $sb){
+                foreach($sb['menus'] as $k1 => $m){
+                    $sidebarConf['subMenus'][$k]['menus'][$k1]['parrent_element'] = 'sidebar';
+                }
+            }
         }
         return $sidebarConf;
     }
@@ -131,7 +164,7 @@ if (!method_exists($this, 'random')) {
     }
 }
 if (!method_exists($this, 'is_login')) {
-    function is_login($role = null, $user = null)
+    function is_login($role = null, $user = null, $callback = null)
     {
         /** @var CI_Controller $ci */
         $ci =& get_instance();
@@ -139,7 +172,7 @@ if (!method_exists($this, 'is_login')) {
         if (!JWT_AUTH)
             $userdata = $ci->session->userdata('login'); //sessiondata('login')
         else {
-            $token = isset($_POST['_token']) ? $_POST['_token'] : null;
+            $token = getBearerToken();
             list($isLogin, $data) = verfify_token($token);
         }
         if (!empty($userdata) && SYNC_DATAUSER) {
@@ -156,6 +189,8 @@ if (!method_exists($this, 'is_login')) {
 
             $userdata = $ci->session->userdata('login');
         }
+        if(!empty($callback) && is_callable($callback))
+           return $callback($role, $user, $userdata);
 
         if (empty($role) && empty($user)) {
             if (JWT_AUTH)
@@ -190,11 +225,11 @@ if (!method_exists($this, 'verify_token')) {
     function verfify_token($token)
     {
         if (empty($token)) {
-            response(['messaage' => 'Token kosong!', 'type' => 'error'], 500);
+            return [false, ['messaage' => 'Token kosong!', 'type' => 'error']];
         }
 
         try {
-            $data = JWT::decode($token, 'BQNIT', array('HS256'));
+            $data = JWT::decode($token, 'penerbit.nahnumedia.by.kamscode', array('HS256'));
             return [true, $data];
         } catch (\Throwable $err) {
             response(['messaage' => 'Token Invalid!', 'type' => 'error', 'error' => $err], 500);
@@ -203,8 +238,9 @@ if (!method_exists($this, 'verify_token')) {
 }
 
 if (!method_exists($this, 'addResourceGroup')) {
-    function addResourceGroup($name, $type = null, $pos = null)
+    function addResourceGroup($names, $removed = [], $type = null, $pos = null, $return = true)
     {
+        
         $type = empty($type) ? 'semua' : $type;
         $pos = empty($pos) ? 'head' : $pos;
 
@@ -213,51 +249,92 @@ if (!method_exists($this, 'addResourceGroup')) {
         $isLoaded = $ci->load->config('themes');
         $resourceText = '';
         $configitem = $ci->config->item('themes');
-        if ($type == 'semua') {
-            if (!$isLoaded || empty($configitem[$name]))
-                return null;
-
-            foreach ($configitem[$name] as $k => $v) {
-                foreach ($v as $resource) {
-                    if (isset($resource['type']) && $resource['type'] == 'cdn')
-                        $resource['src'] = $resource['src'];
-                    else
-                        $resource['src'] = base_url('public/assets/' . $resource['src']);
-                    if ($k == 'js')
-                        $resourceText .= $resource['pos'] == $pos ? "<script src='{$resource['src']}'></script>" : null;
-                    elseif ($k == 'css')
-                        $resourceText .= $resource['pos'] == $pos ? "<link rel='stylesheet' href='{$resource['src']}'></link>" : null;
-                }
+        // Remove From Group
+        foreach($names as $name){
+            if(!empty($removed) && in_array($name, array_keys($removed)) && in_array($name, array_keys($configitem))){
+                $currentItem = $removed[$name];
+                $Tcss = isset($configitem[$name]['css']) ? $configitem[$name]['css'] : [];
+                $Tjs = isset($configitem[$name]['js']) ? $configitem[$name]['js'] : [];
+    
+                $css = array_map(function($arr){
+                    return $arr['src'];
+                }, $Tcss);
+    
+                $js = array_map(function($arr){
+                    return $arr['src'];
+                }, $Tjs);
+    
+                $Fcss = array_diff($css,$currentItem);
+                $Fjs = array_diff($js, $currentItem);
+    
+                // Re Assemble Sources
+                $configitem[$name]['css'] = array_filter($Tcss, function($arr) use ($Fcss) {
+                    return in_array($arr['src'], $Fcss);
+                });
+    
+                $configitem[$name]['js'] = array_filter($Tjs, function($arr) use ($Fjs) {
+                    return in_array($arr['src'], $Fjs);
+                });
+                log_message('INFO', "=================== REMOVE RESOURECE FROM RESOURCES GROUOP ==============" . print_r( ['Tcss' => $Tcss, 'Tjs' => $Tjs, 'css' => $css, 'js' => $js, 'reoved' => $removed, 'Fcss' => $Fcss, 'Fjs' => $Fjs, 'reassemble' => $configitem[$name]], true));
             }
-        } else {
-            if (!$isLoaded || empty($configitem[$name][$type]))
-                return null;
-            foreach ($configitem[$name][$type] as $k => $v) {
-                if (isset($v['type']) && $v['type'] == 'cdn')
-                    $v['src'] = $v['src'];
-                else
-                    $v['src'] = base_url('public/assets/' . $v['src']);
-
-                if ($type == 'js') {
-                    if ($v['pos'] == $pos)
-                        $resourceText .= "<script src='{$v['src']}'></script>";
+            if(!isset($configitem[$name]) || empty($configitem[$name])) return null;
+            if ($type == 'semua') {
+                if (!$isLoaded || empty($configitem[$name]))
+                    return null;
+                foreach ($configitem[$name] as $k => $v) {
+                    foreach ($v as $resource) {
+                        if(isset($resource['type']) && $resource['type'] == 'inline'){
+                            if ($k == 'js')
+                                $resourceText .= $resource['pos'] == $pos ? "<script>" . $resource['src'] . "</script>" : null;
+                            elseif ($k == 'css')
+                                $resourceText .= $resource['pos'] == $pos ?  "<style>" . $resource['src'] . "</style>" : null;
+                        }
+                        else{
+                            $resource['src'] = isset($resource['type']) && $resource['type'] == 'cdn' ? $resource['src'] : base_url('public/assets/' . $resource['src']);
+                            if ($k == 'js')
+                                $resourceText .= $resource['pos'] == $pos ? "<script src='{$resource['src']}'></script>" : null;
+                            elseif ($k == 'css')
+                                $resourceText .= $resource['pos'] == $pos ? "<link rel='stylesheet' href='{$resource['src']}'></link>" : null;
+                        }
+    
+                       
+                    }
                 }
-                if ($type == 'css') {
-                    if ($v['pos'] == $pos)
-                        $resourceText .= "<link rel='stylesheet' href='{$v['src']}'></link>";
+            } else {
+                if (!$isLoaded || empty($configitem[$name][$type]))
+                    return null;
+                foreach ($configitem[$name][$type] as $k => $v) {
+                    if (isset($v['type']) && $v['type'] == 'cdn')
+                        $v['src'] = $v['src'];
+                    else
+                        $v['src'] = base_url('public/assets/' . $v['src']);
+    
+                    if ($type == 'js') {
+                        if ($v['pos'] == $pos)
+                            $resourceText .= "<script src='{$v['src']}'></script>";
+                    }
+                    if ($type == 'css') {
+                        if ($v['pos'] == $pos)
+                            $resourceText .= "<link rel='stylesheet' href='{$v['src']}'></link>";
+                    }
                 }
             }
         }
-        return $resourceText;
+        if($return)
+            return $resourceText;
+        else
+            echo $resourceText;
     }
 }
 
 if (!method_exists($this, 'include_view')) {
     function include_view($path, $data = null)
     {
-        if (is_array($data))
-            extract($data);
-        include APPPATH . 'views/' . $path . '.php';
+        // if (is_array($data))
+        //     extract($data);
+        // include get_path(APPPATH . 'views/' . $path . '.php');
+        $ci =& get_instance();
+        echo $ci->load->view(get_path($path) .".php", $data, true);
     }
 }
 
@@ -266,5 +343,388 @@ if (!method_exists($this, 'rupiah_format')) {
     {
         $hasil_rupiah = "Rp. " . number_format($angka, 2, ',', '.');
         return $hasil_rupiah;
+    }
+}
+
+// Get CSRF Token like Laravel
+if(!method_exists($this, 'csrf_token')){
+    function csrf_token($jsonEncode = true){
+        /** @var CI_Controller $ci  */
+        $ci =& get_instance();
+
+        $ci->load->config('config');
+        $isCSRFAktif = $ci->config->item('csrf_protection');
+        if(!$isCSRFAktif) return null;
+        $csrf = array(
+            'name' => $ci->security->get_csrf_token_name(),
+            'hash' => $ci->security->get_csrf_hash()
+        );
+        return $jsonEncode ? json_encode($csrf) : $csrf;
+    }
+}
+
+// CONVERT PATH
+if(!method_exists($this, 'get_path')){
+    function get_path($path){
+        return DIRECTORY_SEPARATOR == '/' ? str_replace('\\', '/', $path) : str_replace('/', '\\', $path);
+
+    }
+}
+
+if ( ! function_exists('attribut_ke_str'))
+{
+	function attribut_ke_str($attribute, $delimiter = ' ', $dg_quote = true)
+	{
+		$str = '';
+		if (is_array($attribute)) {
+			foreach ($attribute as $key => $value) {
+				if ($value !== '0' && empty($value))
+					$str .= $key;
+				else {
+					$str .= $key . '=';
+					if (is_array($value))
+						$value = implode(' ', $value);
+					$str .= $dg_quote ? '"' . $value . '"' : $value;
+				}
+				$str .= $delimiter;
+			}
+			
+			$str = substr($str, 0, strlen($str) - strlen($delimiter));
+		}
+		return $str;
+	}
+}
+
+if ( ! function_exists('str_ke_attribut'))
+{
+	function str_ke_attribut($str, $delimiter = '/[=\n]/')
+	{
+		$attribute = array();
+		
+		$a = preg_split($delimiter, $str, -1, PREG_SPLIT_NO_EMPTY);
+		for ($i = 0; $i < count($a); $i+=2) {
+			$attribute[$a[$i]] = $a[$i+1];
+		}
+		return $attribute;
+	}
+}
+
+if (!function_exists('toolbar_items')) {
+    function toolbar_items($toolbar, &$items = array()) {
+        if ((isset($toolbar['tipe']) && ($toolbar['tipe'] == 'link' || $toolbar['tipe'] == 'dropdown')) || isset($toolbar['href'])) {
+            $items[] = $toolbar;
+            return;
+        }
+        if(!is_array($toolbar))
+            return;
+        
+        foreach ($toolbar as $t) {
+            if (!is_array($t))
+                continue;
+            
+            foreach ($t as $n) {
+                toolbar_items($n, $items);
+            }
+        }
+    }
+}
+
+if(!function_exists('load_script')){
+    function load_script($script, $data = array(), $return = false){
+        $ci =& get_instance();
+        $minifier = new JS();
+
+        $ext = pathinfo($script, PATHINFO_EXTENSION);
+        if(empty($ext)) $script .= '.js';
+        if(!file_exists(get_path(ASSETS_PATH .'js/' . $script))) return null;
+        
+        $_script = $ci->load->js($script, $data, true);
+        $minifier->add($_script);
+        $_script = $minifier->minify();
+        if($return)
+            return $_script;
+        else 
+            echo $_script;
+    }
+
+}
+
+if(!function_exists('starWith')){
+    function startWith( $haystack, $needle ) {
+        $length = strlen( $needle );
+        return substr( $haystack, 0, $length ) === $needle;
+   }
+}
+
+if(!function_exists('endWith')){
+    function endWith( $haystack, $needle ) {
+        $length = strlen( $needle );
+        if( !$length ) {
+            return true;
+        }
+        return substr( $haystack, -$length ) === $needle;
+    }
+}
+
+if(!function_exists('sandi')){
+    /**
+   * @param String $text
+   * @param String $type ['AN', 'AZ'] - [default: 'AN']
+   * @return String
+   */
+    function sandi($text, $type = "AN"){
+        $result = null;
+        $an = [
+            'a' => 'n',
+            'b' => 'o',
+            'c' => 'p',
+            'd' => 'q',
+            'e' => 'r',
+            'f' => 's',
+            'g' => 't',
+            'h' => 'u',
+            'i' => 'v',
+            'j' => 'w',
+            'k' => 'x',
+            'l' => 'y',
+            'm' => 'z',
+            'A' => 'N',
+            'B' => 'O',
+            'C' => 'P',
+            'D' => 'Q',
+            'E' => 'R',
+            'F' => 'S',
+            'G' => 'T',
+            'H' => 'U',
+            'I' => 'V',
+            'J' => 'W',
+            'K' => 'X',
+            'L' => 'Y',
+            'M' => 'Z',
+            '-' => '+',
+            '_' => '=',
+            '@' => '#',
+            '&' => '!',
+            ' ' => '*',
+        ];
+        $az = [
+            'a' => 'z',
+            'b' => 'y',
+            'c' => 'x',
+            'd' => 'w',
+            'e' => 'v',
+            'f' => 'u',
+            'g' => 't',
+            'h' => 's',
+            'i' => 'r',
+            'j' => 'q',
+            'k' => 'p',
+            'l' => 'o',
+            'm' => 'n',
+            'n' => 'm',
+            'o' => 'l',
+            'p' => 'k',
+            'q' => 'j',
+            'r' => 'i',
+            's' => 'h',
+            't' => 'g',
+            'u' => 'f',
+            'v' => 'e',
+            'w' => 'd',
+            'x' => 'c',
+            'y' => 'b',
+            'z' => 'a',
+
+            'A' => 'N',
+            'B' => 'O',
+            'C' => 'P',
+            'D' => 'Q',
+            'E' => 'R',
+            'F' => 'S',
+            'G' => 'T',
+            'H' => 'U',
+            'I' => 'V',
+            'J' => 'W',
+            'K' => 'X',
+            'L' => 'Y',
+            'M' => 'Z',
+
+            '-' => '+',
+            '_' => '=',
+            '@' => '#',
+            '&' => '!',
+            ' ' => '*',
+        ];
+        $an_flip = array_flip($an);
+        $az_flip = array_flip($az);
+        if($type == "AN"){
+            foreach(str_split($text) as $char){
+                if(isset($an[$char]))
+                    $result .= $an[$char];
+                elseif(isset($an_flip[$char]))
+                    $result .= $an_flip[$char];
+            }
+        }else if($type == "AZ"){
+            foreach(str_split($text) as $char){
+                if(isset($az[$char]))
+                    $result .= $az[$char];
+                elseif(isset($az_flip[$char]))
+                    $result .= $az_flip[$char];
+            }
+        }
+        return $result;
+    }
+}
+
+if(!function_exists('assets_url')){
+    function assets_url($path = null){
+        return base_url('public/assets/' . $path);
+    }
+}
+
+if(!function_exists('buatbdf')){
+    function buat_pdf($html, $title = null){
+        require_once "./application/third_party/dompdf-1.0.2/autoload.inc.php";
+        $pdf = new Dompdf();
+
+		$pdf->loadHtml($html);
+		// (Opsional) Mengatur ukuran kertas dan orientasi kertas
+		$pdf->setPaper('A4', 'potrait');
+		// Menjadikan HTML sebagai PDF
+		$pdf->render();
+		// Output akan menghasilkan PDF ke Browser
+		$pdf->stream($title);
+	}
+}
+
+if(!function_exists('contentview_url')){
+    function contentview_url($url){
+        $options = array(
+            CURLOPT_RETURNTRANSFER => true,   // return web page
+            CURLOPT_HEADER         => false,  // don't return headers
+            CURLOPT_FOLLOWLOCATION => true,   // follow redirects
+            CURLOPT_MAXREDIRS      => 10,     // stop after 10 redirects
+            CURLOPT_ENCODING       => "",     // handle compressed
+            CURLOPT_USERAGENT      => "futsal", // name of client
+            CURLOPT_AUTOREFERER    => true,   // set referrer on redirect
+            CURLOPT_CONNECTTIMEOUT => 120,    // time-out on connect
+            CURLOPT_TIMEOUT        => 120,    // time-out on response
+        ); 
+    
+        $ch = curl_init($url);
+        curl_setopt_array($ch, $options);
+    
+        $content  = curl_exec($ch);
+    
+        curl_close($ch);
+    
+        return $content;
+    }
+}
+if(!function_exists('buat_tabel')){
+    function buat_tabel($header, $data){
+        
+    }
+}
+if(!function_exists('kapitalize')){
+    function kapitalize($string, $tipe = 'firstword'){
+        if($tipe == 'all'){
+            return strtoupper($string);
+        }elseif($tipe == 'first'){
+            return ucfirst(strtolower($string));
+        }elseif($tipe == 'firstword'){
+            $str = explode(' ', $string);
+            $tmp = [];
+            foreach($str as $s) {
+                $tmp[] = ucfirst(strtolower($s));
+            }
+
+            return join(' ', $tmp);
+        }
+    }
+}
+
+if(!function_exists('getAuthorizationHeader')){
+    /** 
+     * Get header Authorization
+     * */
+    function getAuthorizationHeader(){
+        $headers =  sessiondata('login', 'token');
+        
+        if (isset($_SERVER['Authorization'])) {
+            $headers = trim($_SERVER["Authorization"]);
+        }
+        else if (isset($_SERVER['HTTP_AUTHORIZATION'])) { //Nginx or fast CGI
+            $headers = trim($_SERVER["HTTP_AUTHORIZATION"]);
+        } elseif (function_exists('apache_request_headers')) {
+            $requestHeaders = apache_request_headers();
+            // Server-side fix for bug in old Android versions (a nice side-effect of this fix means we don't care about capitalization for Authorization)
+            $requestHeaders = array_combine(array_map('ucwords', array_keys($requestHeaders)), array_values($requestHeaders));
+            //print_r($requestHeaders);
+            if (isset($requestHeaders['Authorization'])) {
+                $headers = trim($requestHeaders['Authorization']);
+            }
+        }
+        return $headers;
+    }
+}
+
+if(!function_exists('getBearerToken')){
+    /**
+     * get access token from header
+     * */
+    function getBearerToken() {
+        $headers = getAuthorizationHeader();
+        // HEADER: Get the access token from the header
+        if (!empty($headers)) {
+            if (preg_match('/Bearer\s(\S+)/', $headers, $matches)) {
+                return $matches[1];
+            }
+        }
+        return $headers;
+    }
+}
+
+if(!function_exists('post_curl')){
+    function post_curl($url, $data, $opsi = []){
+       try {
+            $curl = curl_init();
+            curl_setopt($curl, CURLOPT_URL, $url);
+            curl_setopt($curl, CURLOPT_POST, 1);
+            curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
+            curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+            $response = curl_exec($curl);
+            curl_close($curl);
+            return json_decode($response);
+       } catch (\Throwable $th) {
+        //throw $th;
+            response(['message' => 'Terjadi kesalahan', 'err' => $th->getMessage()]);
+       }
+    }
+}
+if(!function_exists('get_curl')){
+    function get_curl($url, $opsi = []){
+       try {
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+          CURLOPT_URL => $url,
+          CURLOPT_RETURNTRANSFER => true,
+          CURLOPT_ENCODING => '',
+          CURLOPT_MAXREDIRS => 10,
+          CURLOPT_TIMEOUT => 0,
+          CURLOPT_FOLLOWLOCATION => true,
+          CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+          CURLOPT_CUSTOMREQUEST => 'GET',
+        ));
+        
+        $response = curl_exec($curl);        
+        curl_close($curl);
+        return json_decode($response);
+
+       } catch (\Throwable $th) {
+        //throw $th;
+            response(['message' => 'Terjadi kesalahan', 'err' => $th->getMessage()]);
+       }
     }
 }

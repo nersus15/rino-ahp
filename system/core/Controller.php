@@ -59,13 +59,42 @@ class CI_Controller {
 	private static $instance;
 
 	/**
+	 * CI_Loader
+	 *
+	 * @var	CI_Loader
+	 */
+	public $load;
+	/**
+	 * CI_Loader
+	 *
+	 * @var	CI_DB_query_builder
+	 */
+	public $db;
+	/**
+	 * CI_Loader
+	 *
+	 * @var	CI_Session
+	 */
+	public $session;
+	/**
+	 * CI_Loader
+	 *
+	 * @var	Datatables
+	 */
+	public $datatables;
+
+	/**
 	 * Class constructor
 	 *
 	 * @return	void
 	 */
 
 	private $views = [];
-	private $params = [];
+	private $params = [
+		'extra_js' => [],
+		'extra_css' => [],
+		'removedFromGroup' => []
+	];
 	public function __construct()
 	{
 		self::$instance =& $this;
@@ -82,6 +111,7 @@ class CI_Controller {
 
 		$this->load =& load_class('Loader', 'core');
 		$this->load->initialize();
+		// $this->load->library('renderer');
 		log_message('info', 'Controller Class Initialized');
 	}
 	function setObject($nama, $value){
@@ -100,7 +130,15 @@ class CI_Controller {
 	{
 		return self::$instance;
 	}
-
+	function setView($views){
+		$this->views[] = $views;
+	}
+	function setParams($params, $key, $arrayOfArray = false){
+		if($arrayOfArray)
+			$this->params[$key][] = $params;
+		else
+			$this->params[$key] = $params;
+	}
 	public function addViews($views, $params = null){
 		if(is_array($views)){
 			foreach($views as $v)
@@ -118,50 +156,113 @@ class CI_Controller {
 			
 		
 	}
-	function add_javascript($js){
-		if(isset($js['pos'])){
-			$this->params['extra_js'][] = $js;
-		}else{
-			foreach($js as $j){
-				$this->params['extra_js'][] = $j;
+	/**
+	 * fungsi ini digunakan untuk menambahkan file JS ke halaman yang akan diload
+	 * @param String $posisi Opsi untuk nilai $posisi ['head'|'body:end'] default 'body:end'
+	 * @param String $tipe Opsi untuk nilai $tipe ['file'|'cdn'] default 'file'
+	 * @return void
+	 */
+	function add_javascript($js, $posisi = 'body:end', $tipe = 'file'){
+		if(!in_array($tipe, ['file', 'cdn']))
+			throw new Exception("Tipe Harus CDN atau File", 1);
+		if(is_array($js)){
+			foreach($js as $c){
+				$this->params['extra_js'][] = $tipe == 'cdn' ? $c : ($c . '.js');
 			}
+		}else{
+			$this->params['extra_js'][] = array(
+				'src' => $tipe =='cdn' ? $js : ($js . '.js'),
+				'pos' => $posisi,
+				'type' => $tipe
+			);
 		}
 	}
 	function error_page($file, $params, $type = 'html'){
 		$this->load->view('errors/' . $type . '/' . $file, $params);
 	}
-	function add_cachedJavascript($js, $type = 'file', $data = array()){
-		if(!empty($data)){
-			foreach($data as $k => $v){
-				$this->params['var'][$k] = $v;
-			}
-		}
-		$this->params['extra_js'][] = array(
-			'script' => $type == 'file' ? file_get_contents(ASSETS_PATH . 'public/assets/' . $js) : $js,
-			'type' => 'inline',
-			'pos' => 'body:end'
-		);
-	}
-	function add_cachedStylesheet($css, $type = 'file', $pos = 'head', $data = array()){
-		if(!empty($data)){
-			foreach($data as $k => $v){
-				$this->params['var'][$k] = $v;
-			}
-		}
-		$this->params['extra_css'][] = array(
-			'style' => $type == 'file' ? file_get_contents(ASSETS_PATH . 'public/assets/' . $css) : $css,
-			'type' => 'inline',
-			'pos' => $pos
-		);
-	}
-	function add_stylesheet($css){
-		if(isset($css['pos'])){
-			$this->params['extra_css'][] = $css;
-		}else{
+	function add_cachedJavascript($js, $type = 'file', $pos = "body:end", $data = array())
+    {
+        /** @var CI_Controller */
+		$CI =& get_instance();
+		$CI->load->library('Minifier');
+		try {
+            $params = array(
+                'script' => $type == 'file' ? $CI->minifier->minify($this->load->js($js, $data, true)) : $js,
+                'type' => 'inline',
+                'pos' => 'body:end'
+            );
+            $this->params['extra_js'][] = $params;
+			
+        } catch (\Throwable $th) {
+            print_r($th);
+        }
+		
+    }
+    function add_cachedStylesheet($css, $type = 'file', $pos = 'head', $data = array())
+    {
+        if ($type == 'file') {
+            ob_start();
+            if (!empty($data))
+                extract($data);
+            try {
+                include_once get_path(ASSETS_PATH . 'css/' . $css . '.css');
+            } catch (\Throwable $th) {
+                print_r($th);
+            }
+        }
+
+        $params = array(
+            'style' => $type == 'file' ? ob_get_contents() : $css,
+            'type' => 'inline',
+            'pos' => $pos
+        );
+		$this->params['extra_css'][] = $params;
+        if ($type == 'file')
+            ob_end_clean();
+    }
+	/**
+	 * fungsi ini digunakan untuk menambahkan file CSS ke halaman yang akan diload
+	 * @param String $posisi Opsi untuk nilai $posisi ['head'|'body:end'] default 'head'
+	 * @param String $tipe Opsi untuk nilai $tipe ['file'|'cdn'] default 'file'
+	 * @return void
+	 */
+	function add_stylesheet($css, $posisi = 'head', $tipe = 'file'){
+		if(!in_array($tipe, ['file', 'cdn']))
+			throw new Exception("Tipe Harus CDN atau File", 1);
+			
+		if(is_array($css)){
 			foreach($css as $c){
-				$this->params['extra_css'][] = $c;
+				$this->params['extra_css'][] = $tipe == 'cdn' ? $c : ($c . '.css');
+			}
+		}else{
+			$this->params['extra_css'][] = array(
+				'src' => $tipe == 'cdn' ? $css : ($css . '.css'),
+				'pos' => $posisi,
+				'type' => $tipe
+			);
+		}
+	}
+
+	function removeFromResourceGroup($group, $asset){
+		if(isset($this->params['removedFromGroup'][$group])){
+			$this->params['removedFromGroup'][$group][] = $asset;
+		}else{
+			$this->params['removedFromGroup'][$group] = [$asset];
+		}
+	}
+
+	function getContentView ($path, $data = [], $return = false){
+		$html = $this->load->view(get_path( $path . '.php'), $data, true);
+		if(!empty($data)){
+			foreach($data as $k => $d) {
+				unset($$k);
 			}
 		}
+		if($return)
+			return $html;
+		else
+			echo $html;
+		
 	}
 	public function render(){
 		foreach($this->views as $view){
