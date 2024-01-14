@@ -8,6 +8,7 @@ $data_head = array(
     'loadingAnim' => isset($loading_animation) ? $loading_animation : null,
     'bodyClass' => isset($bodyClass) ? $bodyClass : 'show-spinner',
     'hideSpinner' => isset($hideSpinner) ? $hideSpinner : false,
+    'title' => isset($title) ? $title : null,
 );
 $header = isset($header) ? $header : 'head/main';
 $footer = isset($footer) ? $footer : 'footer/main';

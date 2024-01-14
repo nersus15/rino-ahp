@@ -86,7 +86,7 @@
                     <button class="btn btn-empty p-0" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <span class="name text-primary"><?php echo !empty(sessiondata('login', 'nama_lengkap')) ? sessiondata('login', 'nama_lengkap') : sessiondata('login', 'username') ?></span>
                         <span>
-                            <img class="border border-primary" alt="Profile Picture" src="<?php echo sessiondata('login', 'avatar') ?>" />
+                            <img class="border border-primary" alt="Profile Picture" src="<?= assets_url('img/profile/default.jpg') ?>" />
                         </span>
                     </button>
 

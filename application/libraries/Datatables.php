@@ -123,7 +123,9 @@ class Datatables {
     function getData( string $tipe = 'object', $enableCache = false){
         if($enableCache)
             $this->query->cache_on();
-    
+        if(isset($_GET['start']) && isset($_GET['length'])){
+            $this->setLimit($_GET['length'], $_GET['start']);
+        }
         $this->data = $this->query->get()->result($tipe);
         if($enableCache)
             $this->query->cache_off();
@@ -136,12 +138,12 @@ class Datatables {
         $this->all_data = count($data);
         if(!empty($this->keyword))
             $this->filterred_data = count($data);
-        if(isset($_GET['start']) && isset($_GET['length'])){
-            $start = $_GET['start'];
-            $length = $_GET['length'];
+        // if(isset($_GET['start']) && isset($_GET['length'])){
+        //     $start = $_GET['start'];
+        //     $length = $_GET['length'];
 
-            $data = array_splice($data, $start, $length);
-        }
+        //     $data = array_splice($data, $start, $length);
+        // }
        
         // if($this->reCount){
         //     if(isset($_GET['start']) && isset($_GET['length'])){
@@ -170,6 +172,16 @@ class Datatables {
     function setHeader(array $header){
         $this->header = $header;
         return $this;
+    }
+
+    /**
+     * @param int $limit number of maxsimum results
+     * @param int $offset ending index
+     * @return mixed Array of result
+     * Used to set the limit of results
+     */
+    function setLimit($limit, $offset = 0){
+        $this->query->limit($limit, $offset);
     }
 
     /**

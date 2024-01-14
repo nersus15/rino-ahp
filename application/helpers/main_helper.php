@@ -125,7 +125,7 @@ if (!method_exists($this, 'config_sidebar')) {
 
         $ci->load->config($configName);
         $compConf = $ci->config->item('menu');
-        $sidebarConf = $compConf[$sidebar];
+        $sidebarConf = $compConf[$sidebar]['menus'];
         if(!is_null($activeMenu))
             $sidebarConf[$activeMenu]['active'] = true;
 
@@ -139,6 +139,8 @@ if (!method_exists($this, 'config_sidebar')) {
             $sidebarConf[$k]['id'] = '-';
 
         }
+
+        // var_dump($sidebarConf);die;
 
         $menus = [];
         $subMenus = [];

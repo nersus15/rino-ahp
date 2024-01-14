@@ -1103,8 +1103,8 @@ uihelper = function () {
     }
     $(document).ready(function(){
         if(!$().dataTable && ! $().DataTable) return;
-
-        $('.dataTable').initDatatable();
+        if($('.dataTable').length > 0)
+            $('.dataTable').initDatatable();
     });
 
 

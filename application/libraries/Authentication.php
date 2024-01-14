@@ -13,7 +13,7 @@ class Authentication
         $input = fieldmapping('login', $post);
         // Sanitasi input
         if (!isset($input['user']) || empty($input['user']))
-            response(['message' => 'Tidak ada Username atau Email yang dikirim', 'type' => 'error'], 400);
+            response(['message' => 'Tidak ada Username yang dikirim', 'type' => 'error'], 400);
         else
             $newinput['user'] = $input['user'];
 
@@ -33,11 +33,9 @@ class Authentication
         $ci = &get_instance();
 
         $user = $ci->db
-            ->select('user.*, member.asal, member.dibuat, member.tim, member.penanggung_jawab, member.id as memberid')
+            ->select('user.*')
             ->where('user.username', $input['user'])
-            ->or_where('user.email', $input['user'])
             ->from('user')
-            ->join('member', 'user.member = member.id', 'left')
             ->get()->row_array();
         $ci->db->reset_query();
 

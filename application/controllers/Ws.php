@@ -88,50 +88,204 @@ class Ws extends CI_Controller{
         }
     }
 
-    function buku_get(){
+    function kriteria_get(){
         if(!is_login())
             response("Anda tidak memiliki akses", 403);
-        $this->load->model('Buku');
+        /** @var Datatables */
+        $this->load->library('Datatables');
 
-        $data = $this->Buku->get_dt();
+        $query = $this->db->from('kriteria');
+            
+        $header = array(
+            'id' => array('searchable' => true),
+            'nama' => array('searchable' => true, 'field' => 'nama_kriteria'),
+        );
+        
+
+        $this->datatables->setHeader($header)
+            ->setQuery($query);
+
+        $data =  $this->datatables->getData();
         response($data);
     }
 
-    function buku_post(){
+    function kriteria_post(){
         if(!is_login())
             response("Anda tidak memiliki akses", 403);
-        $this->load->model('Buku');
+     
         $post = $this->input->post();
         
-        list($res, $err) = $this->Buku->simpan($post);
-        if($res)
-            response("Berhasil Mendaftarkan Buku");
-        else
-            response(['message' => 'Terjadi Kesalahan', 'err' => $err], 500);
-    }
-
-    function buku_delete(){
-        if(!is_login())
-            response("Anda tidak memiliki akses", 403);
-
-        $this->load->model('Buku');
-        $post = $this->input->post();
-        list($res, $err) = $this->Buku->delete($post['ids']);
-        if($res)
-            response("Berhasil Delete Buku");
-        else
-            response(['message' => 'Terjadi Kesalahan', 'err' => $err], 500);
-    }
-    function buku_update(){
-        if(!is_login())
-            response("Anda tidak memiliki akses", 403);
-        $this->load->model('Buku');
-        $post = $this->input->post();
+        try {
+            $this->db->insert('kriteria', ['nama_kriteria' => $post['kriteria']]);
+            response("Berhasil Mendaftarkan Kriteria");
+        } catch (\Throwable $th) {
+            response(['message' => 'Terjadi Kesalahan', 'err' => $th->getMessage()], 500);
+        }
+      
             
-        list($res, $err) = $this->Buku->simpan($post, true);
-        if($res)
-            response("Berhasil Update Buku");
-        else
-            response(['message' => 'Terjadi Kesalahan', 'err' => $err], 500);
     }
+
+    function kriteria_delete(){
+        if(!is_login())
+            response("Anda tidak memiliki akses", 403);
+
+        $post = $this->input->post();
+
+        try {
+            $this->db->where_in('id', $post['ids'])->delete('kriteria');
+            response("Berhasil Delete Kriteria");
+        } catch (\Throwable $th) {
+            //throw $th;
+            response(['message' => 'Terjadi Kesalahan', 'err' => $th->getMessage()], 500);
+        }
+    }
+    function kriteria_update(){
+        if(!is_login())
+            response("Anda tidak memiliki akses", 403);
+            
+        $post = $this->input->post();
+        
+        try {
+            $this->db->where('id', $post['id'])->update('kriteria', ['nama_kriteria' => $post['kriteria']]);
+            response("Berhasil Mendaftarkan Kriteria");
+        } catch (\Throwable $th) {
+            response(['message' => 'Terjadi Kesalahan', 'err' => $th->getMessage()], 500);
+        }
+    }
+
+
+    // Sub Kriteria
+    function subkriteria_get(){
+        if(!is_login())
+            response("Anda tidak memiliki akses", 403);
+        /** @var Datatables */
+        $this->load->library('Datatables');
+
+        $query = $this->db->from('sub_kriteria');
+            
+        $header = array(
+            'id' => array('searchable' => true),
+            'nama' => array('searchable' => true, 'field' => 'nama_subkriteria'),
+        );
+        
+
+        $this->datatables->setHeader($header)
+            ->setQuery($query);
+
+        $data =  $this->datatables->getData();
+        response($data);
+    }
+
+    function subkriteria_post(){
+        if(!is_login())
+            response("Anda tidak memiliki akses", 403);
+     
+        $post = $this->input->post();
+        
+        try {
+            $this->db->insert('sub_kriteria', ['nama_subkriteria' => $post['subkriteria']]);
+            response("Berhasil Mendaftarkan Sub Kriteria");
+        } catch (\Throwable $th) {
+            response(['message' => 'Terjadi Kesalahan', 'err' => $th->getMessage()], 500);
+        }
+      
+            
+    }
+
+    function subkriteria_delete(){
+        if(!is_login())
+            response("Anda tidak memiliki akses", 403);
+
+        $post = $this->input->post();
+
+        try {
+            $this->db->where_in('id', $post['ids'])->delete('sub_kriteria');
+            response("Berhasil Delete Sub Kriteria");
+        } catch (\Throwable $th) {
+            //throw $th;
+            response(['message' => 'Terjadi Kesalahan', 'err' => $th->getMessage()], 500);
+        }
+    }
+    function subkriteria_update(){
+        if(!is_login())
+            response("Anda tidak memiliki akses", 403);
+            
+        $post = $this->input->post();
+        
+        try {
+            $this->db->where('id', $post['id'])->update('sub_kriteria', ['nama_subkriteria' => $post['subkriteria']]);
+            response("Berhasil Mendaftarkan Sub Kriteria");
+        } catch (\Throwable $th) {
+            response(['message' => 'Terjadi Kesalahan', 'err' => $th->getMessage()], 500);
+        }
+    }
+
+
+    // Karyawan
+    function karyawan_get(){
+        if(!is_login())
+            response("Anda tidak memiliki akses", 403);
+        /** @var Datatables */
+        $this->load->library('Datatables');
+
+        $query = $this->db->from('karyawan');
+            
+        $header = array(
+            'id' => array('searchable' => false),
+            'nama' => array('searchable' => true),
+            'nip' => array('searchable' => true),
+        );
+        
+
+        $this->datatables->setHeader($header)
+            ->setQuery($query);
+
+        $data =  $this->datatables->getData();
+        response($data);
+    }
+
+    function karyawan_post(){
+        if(!is_login())
+            response("Anda tidak memiliki akses", 403);
+     
+        $post = $this->input->post();
+        
+        try {
+            $this->db->insert('karyawan', ['nama' => $post['nama'], 'nip' => $post['nip']]);
+            response("Berhasil Mendaftarkan Karyawan");
+        } catch (\Throwable $th) {
+            response(['message' => 'Terjadi Kesalahan', 'err' => $th->getMessage()], 500);
+        }
+      
+            
+    }
+
+    function karyawan_delete(){
+        if(!is_login())
+            response("Anda tidak memiliki akses", 403);
+
+        $post = $this->input->post();
+
+        try {
+            $this->db->where_in('id', $post['ids'])->delete('karyawan');
+            response("Berhasil Delete Karyawan");
+        } catch (\Throwable $th) {
+            //throw $th;
+            response(['message' => 'Terjadi Kesalahan', 'err' => $th->getMessage()], 500);
+        }
+    }
+    function karyawan_update(){
+        if(!is_login())
+            response("Anda tidak memiliki akses", 403);
+            
+        $post = $this->input->post();
+        
+        try {
+            $this->db->where('id', $post['id'])->update('karyawan', ['nama' => $post['nama'], 'nip' => $post['nip']]);
+            response("Berhasil Mendaftarkan Karyawan");
+        } catch (\Throwable $th) {
+            response(['message' => 'Terjadi Kesalahan', 'err' => $th->getMessage()], 500);
+        }
+    }
+
 }

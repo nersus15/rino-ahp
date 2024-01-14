@@ -3,8 +3,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 $config['form'] = array(
     'login' => [
-        'user' => 'user',
-        'pass' => 'password'
+        'username' => 'user',
+        'password' => 'password'
     ],
     'user' => array(
         'username' => 'username',

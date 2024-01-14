@@ -37,10 +37,10 @@ $(document).ready(function(){
         submitSuccess: function(data){
             endLoading();
             $('#btn-login').prop('disabled', false);
-            if(!data.token){
+            if(data.type == 'error'){
                 $('#alert_danger').html(data.message).show();
             }else{
-                location.href = path + 'admin';
+                location.href = path;
             }
             if(isFunction(submitSukses))
                 submitSukses(data);
