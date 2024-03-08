@@ -47,7 +47,7 @@ $(document).ready(function(){
         }
         tabelKriteria += '</tr></thead><tbody>';
         for(let i = 0; i < selectedKriteria.length; i++){
-            tabelKriteria += '<tr><td>K' + (i + 1) + "</td>";
+            tabelKriteria += '<tr><th>K' + (i + 1) + "</th>";
             for(let j = 0; j < selectedKriteria.length; j++){
                 tabelKriteria += '<td><input id="K'+ (i + 1) + '-' + 'K' + (j + 1)  +'" class="form-control input-kriteria"></td>';
             }
@@ -65,7 +65,7 @@ $(document).ready(function(){
             }
             tabelSubKriteria += '</tr></thead><tbody>';
             for(let i = 0; i < selectedSubKriteria.length; i++){
-                tabelSubKriteria += '<tr><td>SK' + (i + 1) + "</td>";
+                tabelSubKriteria += '<tr><th>SK' + (i + 1) + "</th>";
                 for(let j = 0; j < selectedSubKriteria.length; j++){
                     tabelSubKriteria += '<td><input id="K'+(k + 1)+'-SK'+ (i + 1) + '-' + 'SK' + (j + 1)  +'" class="form-control input-subkriteria"></td>';
                 }

@@ -9931,3 +9931,68 @@ INFO - 2024-01-14 17:35:43 --> Input Class Initialized
 INFO - 2024-01-14 17:35:43 --> Language Class Initialized
 DEBUG - 2024-01-14 17:35:43 --> ============ FIX Controller FilePath =======> C:\xampp7\htdocs\ahp_algorithm\application\controllers/Public.php  ==> Exist: 
 ERROR - 2024-01-14 17:35:43 --> 404 Page Not Found: Public/assets
+INFO - 2024-01-14 17:48:18 --> Config Class Initialized
+INFO - 2024-01-14 17:48:18 --> Hooks Class Initialized
+DEBUG - 2024-01-14 17:48:18 --> UTF-8 Support Enabled
+INFO - 2024-01-14 17:48:18 --> Utf8 Class Initialized
+INFO - 2024-01-14 17:48:18 --> URI Class Initialized
+DEBUG - 2024-01-14 17:48:18 --> ============ Segments ======> Array
+(
+    [0] => penilaian
+)
+
+DEBUG - 2024-01-14 17:48:18 --> ============ IS DIR C:\xampp7\htdocs\ahp_algorithm\application\controllers\Penilaian ======> 
+DEBUG - 2024-01-14 17:48:18 --> ============ Rewrite SetClass Routing ==========>  class: penilaian
+INFO - 2024-01-14 17:48:18 --> Router Class Initialized
+INFO - 2024-01-14 17:48:18 --> Output Class Initialized
+INFO - 2024-01-14 17:48:18 --> Security Class Initialized
+DEBUG - 2024-01-14 17:48:18 --> Global POST, GET and COOKIE data sanitized
+INFO - 2024-01-14 17:48:18 --> Input Class Initialized
+INFO - 2024-01-14 17:48:18 --> Language Class Initialized
+DEBUG - 2024-01-14 17:48:18 --> ============ FIX Controller FilePath =======> C:\xampp7\htdocs\ahp_algorithm\application\controllers/Penilaian.php  ==> Exist: 1
+DEBUG - 2024-01-14 17:48:18 --> FIX Method ====> index
+INFO - 2024-01-14 17:48:18 --> Loader Class Initialized
+INFO - 2024-01-14 17:48:18 --> Helper loaded: url_helper
+INFO - 2024-01-14 17:48:18 --> Helper loaded: file_helper
+INFO - 2024-01-14 17:48:18 --> Helper loaded: formloader_helper
+INFO - 2024-01-14 17:48:18 --> Helper loaded: main_helper
+INFO - 2024-01-14 17:48:18 --> Database Driver Class Initialized
+INFO - 2024-01-14 17:48:19 --> Session: Class initialized using 'files' driver.
+INFO - 2024-01-14 17:48:19 --> Email Class Initialized
+INFO - 2024-01-14 17:48:19 --> Controller Class Initialized
+DEBUG - 2024-01-14 17:48:19 --> Config file loaded: C:\xampp7\htdocs\ahp_algorithm\application\config/menu.php
+INFO - 2024-01-14 17:48:19 --> File loaded: C:\xampp7\htdocs\ahp_algorithm\public\assets\js/pages/penilaian.js
+DEBUG - 2024-01-14 17:48:19 --> Config file loaded: C:\xampp7\htdocs\ahp_algorithm\application\config/themes.php
+INFO - 2024-01-14 17:48:19 --> File loaded: C:\xampp7\htdocs\ahp_algorithm\application\views\head\main.php
+INFO - 2024-01-14 17:48:19 --> File loaded: C:\xampp7\htdocs\ahp_algorithm\application\views\component\navbar\navbar.dore.php
+INFO - 2024-01-14 17:48:19 --> File loaded: C:\xampp7\htdocs\ahp_algorithm\application\views\component\sidebar\sidebar.dore.php
+INFO - 2024-01-14 17:48:19 --> File loaded: C:\xampp7\htdocs\ahp_algorithm\application\views\pages\penilaian.php
+INFO - 2024-01-14 17:48:19 --> File loaded: C:\xampp7\htdocs\ahp_algorithm\application\views\footer\main.php
+INFO - 2024-01-14 17:48:19 --> File loaded: C:\xampp7\htdocs\ahp_algorithm\application\views\template/dore.php
+INFO - 2024-01-14 17:48:19 --> Final output sent to browser
+DEBUG - 2024-01-14 17:48:19 --> Total execution time: 0.1150
+INFO - 2024-01-14 17:48:19 --> Config Class Initialized
+INFO - 2024-01-14 17:48:19 --> Hooks Class Initialized
+DEBUG - 2024-01-14 17:48:19 --> UTF-8 Support Enabled
+INFO - 2024-01-14 17:48:19 --> Utf8 Class Initialized
+INFO - 2024-01-14 17:48:19 --> URI Class Initialized
+DEBUG - 2024-01-14 17:48:19 --> ============ Segments ======> Array
+(
+    [0] => public
+    [1] => assets
+    [2] => vendor
+    [3] => bootstrap
+    [4] => js
+    [5] => popper.min.js.map
+)
+
+DEBUG - 2024-01-14 17:48:19 --> ============ IS DIR C:\xampp7\htdocs\ahp_algorithm\application\controllers\Public ======> 
+DEBUG - 2024-01-14 17:48:19 --> ============ Rewrite SetClass Routing ==========>  class: public
+INFO - 2024-01-14 17:48:19 --> Router Class Initialized
+INFO - 2024-01-14 17:48:19 --> Output Class Initialized
+INFO - 2024-01-14 17:48:19 --> Security Class Initialized
+DEBUG - 2024-01-14 17:48:19 --> Global POST, GET and COOKIE data sanitized
+INFO - 2024-01-14 17:48:19 --> Input Class Initialized
+INFO - 2024-01-14 17:48:19 --> Language Class Initialized
+DEBUG - 2024-01-14 17:48:19 --> ============ FIX Controller FilePath =======> C:\xampp7\htdocs\ahp_algorithm\application\controllers/Public.php  ==> Exist: 
+ERROR - 2024-01-14 17:48:19 --> 404 Page Not Found: Public/assets
